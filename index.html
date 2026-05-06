@@ -74,7 +74,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 .g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
 
 /* MAP */
-#map{height:420px}
+#map{height:calc(100vh - 200px);min-height:500px;width:100%;background:var(--brll)}
+#tsec-map{margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);width:100vw;padding:0 12px}
+#tsec-map > .card{max-width:1800px;margin:0 auto}
+.map-legend{padding:10px 16px;border-top:1px solid var(--brd)}
+.ml-row{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--muted)}
+.ml-ttl{font-weight:700;color:var(--txt);font-size:11px}
+.ml-grad{flex:1;max-width:300px;height:10px;border-radius:5px;background:linear-gradient(to right,#dbeafe,#93c5fd,#60a5fa,#3b82f6,#2563eb,#1e3a8a)}
+.ml-min,.ml-max{font-weight:600;font-variant-numeric:tabular-nums;min-width:18px}
+.ml-max{text-align:left}
+.ml-hint{font-size:10px;color:var(--light);margin-top:4px}
 .lf-popup{font-family:system-ui;min-width:150px}
 .lf-popup h4{font-size:14px;font-weight:700;margin-bottom:3px}
 .lf-popup .sub{font-size:11px;color:#64748b}
@@ -174,6 +183,18 @@ select.fs:focus{outline:none;border-color:var(--pl)}
 .tsec{display:none}
 .tsec.on{display:block}
 
+/* OVERVIEW FILTER */
+.of-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.of-lbl{font-size:11px;font-weight:700;color:var(--muted)}
+.of-info{font-size:11px;color:var(--p);font-weight:600;margin-left:auto}
+.of-row select.fs{min-width:140px;max-width:200px}
+@media(max-width:540px){.of-row select.fs{flex:1;min-width:0}}
+
+/* SEGMENT */
+.seg{display:inline-flex;background:var(--bg);border:1px solid var(--brd);border-radius:7px;padding:2px;gap:2px}
+.seg-b{padding:5px 10px;font-size:11px;font-weight:600;border:none;background:transparent;color:var(--muted);border-radius:5px;cursor:pointer;transition:var(--tr)}
+.seg-b.on{background:var(--p);color:#fff}
+
 /* SCROLLBAR */
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -185,7 +206,8 @@ select.fs:focus{outline:none;border-color:var(--pl)}
   .sg{grid-template-columns:repeat(2,1fr);gap:8px}
   .sv{font-size:22px}
   .sc{padding:11px}
-  #map{height:280px}
+  #map{height:calc(100vh - 180px);min-height:380px}
+  #tsec-map{padding:0 6px}
   .cw{height:220px}.cw-lg{height:260px}.cw-sm{height:190px}
   .g2,.g3{grid-template-columns:1fr}
   .rg{grid-template-columns:repeat(2,1fr)}
@@ -233,7 +255,6 @@ select.fs:focus{outline:none;border-color:var(--pl)}
 <div class="tabs" id="tabs">
   <div class="tab on" data-tab="overview" onclick="goTab('overview')">📊 Ringkasan</div>
   <div class="tab" data-tab="map" onclick="goTab('map')">🗺️ Peta Sebaran</div>
-  <div class="tab" data-tab="analytics" onclick="goTab('analytics')">📈 Analitik</div>
   <div class="tab" data-tab="reqs" onclick="goTab('reqs')">✅ Persyaratan</div>
   <div class="tab" data-tab="dups" onclick="goTab('dups')">🔍 Duplikat<span id="dupbdg" class="bdg br" style="display:none;margin-left:4px"></span></div>
   <div class="tab" data-tab="list" onclick="goTab('list')">👥 Peserta</div>
@@ -244,6 +265,21 @@ select.fs:focus{outline:none;border-color:var(--pl)}
 <!-- ===== OVERVIEW ===== -->
 <div id="tsec-overview" class="tsec on">
 
+  <!-- FILTER BAR -->
+  <div class="card sec ofb">
+    <div class="cb" style="padding:11px 14px">
+      <div class="of-row">
+        <span class="of-lbl">🔎 Filter:</span>
+        <select class="fs" id="of-kec" onchange="onOFilter('kec')"><option value="">Semua Kecamatan</option></select>
+        <select class="fs" id="of-desa" onchange="onOFilter('desa')"><option value="">Semua Desa</option></select>
+        <select class="fs" id="of-edu" onchange="onOFilter()"><option value="">Semua Pendidikan</option></select>
+        <select class="fs" id="of-job" onchange="onOFilter()"><option value="">Semua Pekerjaan</option></select>
+        <button class="btn btn-o" onclick="resetOFilter()" id="of-reset" style="display:none">↺ Reset</button>
+        <span class="of-info" id="of-info"></span>
+      </div>
+    </div>
+  </div>
+
   <div class="sg sec" id="sg">
     <div class="sc" style="--ac:#3b82f6"><div class="si">👥</div><div class="sv" id="s-tot">–</div><div class="sl">Total Pendaftar</div><div class="ss" id="s-tots">–</div></div>
     <div class="sc" style="--ac:#10b981"><div class="si">📅</div><div class="sv" id="s-tdy">–</div><div class="sl">Pendaftar Hari Ini</div><div class="ss" id="s-tdys">–</div></div>
@@ -252,15 +288,20 @@ select.fs:focus{outline:none;border-color:var(--pl)}
     <div class="sc" style="--ac:#ef4444"><div class="si">⚠️</div><div class="sv" id="s-dup">–</div><div class="sl">Terindikasi Duplikat</div><div class="ss">NIK / No. HP</div></div>
   </div>
 
-  <div class="g2 sec">
-    <div class="card">
-      <div class="ch"><div class="ct"><div class="ci">📈</div>Tren Pendaftaran Harian</div></div>
-      <div class="cb"><div class="cw"><canvas id="trendC"></canvas></div></div>
+  <div class="card sec">
+    <div class="ch"><div class="ct"><div class="ci">🏆</div>Sebaran Pendaftar per Kecamatan</div></div>
+    <div class="cb"><div class="cw-lg"><canvas id="kecC"></canvas></div></div>
+  </div>
+
+  <div class="card sec">
+    <div class="ch">
+      <div class="ct"><div class="ci">📈</div>Tren Pendaftaran Harian</div>
+      <div class="seg" id="tr-seg">
+        <button class="seg-b on" data-d="14" onclick="setTrend(14,this)">14 Hari</button>
+        <button class="seg-b" data-d="30" onclick="setTrend(30,this)">30 Hari</button>
+      </div>
     </div>
-    <div class="card">
-      <div class="ch"><div class="ct"><div class="ci">🏆</div>Sebaran per Kecamatan</div></div>
-      <div class="cb" id="topkec"><div class="lt">Memuat...</div></div>
-    </div>
+    <div class="cb"><div class="cw"><canvas id="trendC"></canvas></div></div>
   </div>
 
   <div class="g2 sec">
@@ -269,9 +310,14 @@ select.fs:focus{outline:none;border-color:var(--pl)}
       <div class="cb"><div class="cw"><canvas id="eduC"></canvas></div></div>
     </div>
     <div class="card">
-      <div class="ch"><div class="ct"><div class="ci">💼</div>Distribusi Pekerjaan</div></div>
-      <div class="cb"><div class="cw"><canvas id="jobC"></canvas></div></div>
+      <div class="ch"><div class="ct"><div class="ci">👤</div>Distribusi Usia</div></div>
+      <div class="cb"><div class="cw"><canvas id="ageC"></canvas></div></div>
     </div>
+  </div>
+
+  <div class="card sec">
+    <div class="ch"><div class="ct"><div class="ci">💼</div>Distribusi Pekerjaan</div></div>
+    <div class="cb"><div class="cw"><canvas id="jobC"></canvas></div></div>
   </div>
 </div>
 
@@ -283,35 +329,15 @@ select.fs:focus{outline:none;border-color:var(--pl)}
       <select class="fs" id="mkf" onchange="mapFilter()"><option value="">Semua Kecamatan</option></select>
     </div>
     <div id="map"></div>
-    <div class="cb" style="padding:10px 16px">
-      <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--muted)">
-        <span>🔵 Warna lebih gelap = lebih banyak pendaftar</span>
-        <span>• Klik desa untuk detail</span>
-        <span>• Scroll untuk zoom</span>
+    <div class="map-legend">
+      <div class="ml-row">
+        <span class="ml-ttl">Jumlah Pendaftar</span>
+        <span class="ml-min" id="ml-min">0</span>
+        <span class="ml-grad"></span>
+        <span class="ml-max" id="ml-max">–</span>
       </div>
+      <div class="ml-hint">Klik desa untuk detail • Scroll untuk zoom</div>
     </div>
-  </div>
-</div>
-
-<!-- ===== ANALYTICS ===== -->
-<div id="tsec-analytics" class="tsec">
-  <div class="card sec">
-    <div class="ch"><div class="ct"><div class="ci">📊</div>Pendaftar per Kecamatan</div></div>
-    <div class="cb"><div class="cw-lg"><canvas id="kecC"></canvas></div></div>
-  </div>
-  <div class="g2 sec">
-    <div class="card">
-      <div class="ch"><div class="ct"><div class="ci">👤</div>Distribusi Usia</div></div>
-      <div class="cb"><div class="cw"><canvas id="ageC"></canvas></div></div>
-    </div>
-    <div class="card">
-      <div class="ch"><div class="ct"><div class="ci">🎓</div>Distribusi Pendidikan</div></div>
-      <div class="cb"><div class="cw"><canvas id="edu2C"></canvas></div></div>
-    </div>
-  </div>
-  <div class="card sec">
-    <div class="ch"><div class="ct"><div class="ci">📆</div>Tren Pendaftaran (30 Hari Terakhir)</div></div>
-    <div class="cb"><div class="cw-lg"><canvas id="trend2C"></canvas></div></div>
   </div>
 </div>
 
@@ -397,10 +423,12 @@ select.fs:focus{outline:none;border-color:var(--pl)}
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script>
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-const CSV_URL  = 'https://docs.google.com/spreadsheets/d/1SDCgjjrS6tKEN6f5GJqqiY8ydltrE2Ll5eWbVFETFvE/export?format=csv';
+// URL Web App Apps Script. Lihat apps_script/Code.gs untuk cara deploy.
+// Setelah deploy, tempel URL `/exec`-nya di sini.
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbymFifvCv_UH8f-f2QpOIiYDZNqrCT9hgZbFqxtI7dai6AzWd-SqOIF8lEYNQ07iZ8Hdw/exec';
+
 const GEO_URL  = 'peta/final_desa_5108_2025-1.geojson';
 const PAGE_SZ  = 20;
 const REFRESH_MS = 5 * 60 * 1000;
@@ -414,18 +442,9 @@ let dupF = 'all';
 let dupGroups = { nik:[], hp:[] };
 let dark = false;
 let rTimer = null, cTimer = null, nextAt = 0;
-
-// ── HASH (PII masking) ────────────────────────────────────────────────────────
-async function sha256(s){
-  if(!s||!s.trim())return null;
-  const n = s.trim().replace(/\s+/g,'').toLowerCase();
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(n));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-function normPhone(p){
-  if(!p)return '';
-  return p.replace(/[\s\-\+\(\)\.]/g,'').replace(/^62/,'0').replace(/^0+/,'0');
-}
+let mapPainted = false;
+let trDays = 14;
+let orows = [];
 
 // ── THEME ─────────────────────────────────────────────────────────────────────
 function toggleDark(){
@@ -453,7 +472,12 @@ function refreshChartTheme(){
 function goTab(t){
   document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('on', el.dataset.tab===t));
   document.querySelectorAll('.tsec').forEach(el=>el.classList.toggle('on', el.id===`tsec-${t}`));
-  if(t==='map'&&lmap) setTimeout(()=>lmap.invalidateSize(),120);
+  if(t==='map'){
+    setTimeout(()=>{
+      if(!mapPainted && geo){ initMap(); paintMap(); mapPainted=true; }
+      if(lmap){ lmap.invalidateSize(); if(gjLayer) lmap.fitBounds(gjLayer.getBounds(),{padding:[20,20]}); }
+    },150);
+  }
 }
 
 // ── TOAST ─────────────────────────────────────────────────────────────────────
@@ -470,12 +494,15 @@ function toast(msg,type='info'){
 async function load(){
   show('lov'); ltxt('Mengambil data...');
   try{
-    const [csv, gj] = await Promise.all([
-      fetchCSV(),
+    if(!WEBAPP_URL){
+      throw new Error('WEBAPP_URL belum diisi. Lihat apps_script/Code.gs untuk cara deploy.');
+    }
+    const [data, gj] = await Promise.all([
+      fetchData(),
       geo ? Promise.resolve(geo) : fetch(GEO_URL).then(r=>r.json())
     ]);
     geo = gj;
-    rows = csv.filter(r => r && r.Timestamp && String(r.Timestamp).trim());
+    rows = data.filter(r => r && r.Timestamp && String(r.Timestamp).trim());
     frows = [...rows];
     ltxt('Memproses data...');
     await process();
@@ -489,70 +516,73 @@ async function load(){
   }finally{ hide('lov'); }
 }
 
-function fetchCSV(){
-  return new Promise((ok,fail)=>{
-    Papa.parse(CSV_URL,{
-      download:true, header:true, skipEmptyLines:true,
-      complete:r=>ok(r.data), error:fail
-    });
-  });
+async function fetchData(){
+  const r = await fetch(WEBAPP_URL, {redirect:'follow', cache:'no-store'});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  const j = await r.json();
+  if(j.error) throw new Error(j.error);
+  return j.rows || [];
 }
 
 async function process(){
-  calcStats();
-  renderTopKec();
-  initMap();
-  paintMap();
-  buildCharts();
-  renderReqs();
+  buildOFilters();
+  applyOFilter();
   await detectDups();
+  renderOverview();
+  renderReqs();
   renderDupTable();
   renderList();
   buildFilters();
+  mapPainted = false;
+  fillMapKecFilter();
+  if(document.getElementById('tsec-map').classList.contains('on')){
+    initMap(); paintMap(); mapPainted=true;
+    setTimeout(()=>lmap&&lmap.invalidateSize(),100);
+  }
+}
+
+function renderOverview(){
+  calcStats(orows);
+  buildCharts(orows);
+}
+
+function fillMapKecFilter(){
+  if(!geo)return;
+  const kecs = [...new Set(geo.features.map(f=>f.properties.nmkec))].sort();
+  const mkf = document.getElementById('mkf');
+  if(mkf) mkf.innerHTML='<option value="">Semua Kecamatan</option>'+kecs.map(k=>`<option value="${k}">${k}</option>`).join('');
 }
 
 // ── STATS ─────────────────────────────────────────────────────────────────────
-function calcStats(){
-  const tot = rows.length;
+function calcStats(data){
+  data = data || rows;
+  const tot = data.length;
+  const totAll = rows.length;
   const todayStr = new Date().toLocaleDateString('id-ID');
-  const tdy = rows.filter(r=>{
+  const tdy = data.filter(r=>{
     try{ return r.Timestamp && new Date(r.Timestamp).toLocaleDateString('id-ID')===todayStr; }catch{return false;}
   }).length;
-  const kecs = new Set(rows.map(r=>r['Kecamatan Domisili']?.trim()).filter(Boolean));
-  const desas = new Set(rows.map(r=>r['iddesa']).filter(Boolean));
+  const kecs = new Set(data.map(r=>r['Kecamatan Domisili']?.trim()).filter(Boolean));
+  const desas = new Set(data.map(r=>r['iddesa']).filter(Boolean));
   const allKec = geo ? new Set(geo.features.map(f=>f.properties.nmkec)).size : '?';
   const allDesa = geo ? geo.features.length : 148;
+  const dupN = data.filter(r=>r._dn||r._dh).length;
 
   set('s-tot', tot.toLocaleString('id-ID'));
-  set('s-tots', `${tot} orang telah mendaftar`);
+  set('s-tots', tot===totAll ? `${tot} orang telah mendaftar` : `dari ${totAll.toLocaleString('id-ID')} total`);
   set('s-tdy', tdy.toLocaleString('id-ID'));
   set('s-tdys', tdy>0?`↑ pendaftar baru hari ini`:`Belum ada pendaftar hari ini`);
   set('s-kec', kecs.size);
   set('s-kecs', `dari ${allKec} kecamatan`);
   set('s-des', desas.size);
   set('s-dess', `dari ${allDesa} desa/kel`);
-}
-
-// ── TOP KECAMATAN ─────────────────────────────────────────────────────────────
-function renderTopKec(){
-  const cnt = {}; rows.forEach(r=>{ const k=r['Kecamatan Domisili']?.trim(); if(k) cnt[k]=(cnt[k]||0)+1; });
-  const sorted = Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
-  const max = sorted[0]?.[1]||1;
-  document.getElementById('topkec').innerHTML = sorted.length
-    ? sorted.map(([nm,n],i)=>`
-        <div class="kr">
-          <div class="kr-bg" style="width:${n/max*100}%"></div>
-          <div class="krn">${i+1}</div>
-          <div class="krname">${esc(nm)}</div>
-          <div class="krcnt">${n}</div>
-        </div>`).join('')
-    : `<div class="es"><div class="es-i">📭</div>Belum ada data</div>`;
+  set('s-dup', dupN);
 }
 
 // ── MAP ───────────────────────────────────────────────────────────────────────
 function initMap(){
   if(lmap)return;
-  lmap = L.map('map',{scrollWheelZoom:false,attributionControl:false,zoomControl:true});
+  lmap = L.map('map',{scrollWheelZoom:true,attributionControl:false,zoomControl:true});
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',{
     subdomains:'abcd', maxZoom:19
   }).addTo(lmap);
@@ -562,12 +592,12 @@ function initMap(){
 function getColor(n, mx){
   if(!n) return '#f1f5f9';
   const t = n/mx;
-  if(t>.80) return '#0c1e5e';
-  if(t>.60) return '#1e3a8a';
-  if(t>.40) return '#2563eb';
+  if(t>.80) return '#1e3a8a';
+  if(t>.60) return '#2563eb';
+  if(t>.40) return '#3b82f6';
   if(t>.25) return '#60a5fa';
-  if(t>.10) return '#fbbf24';
-  return '#fde68a';
+  if(t>.10) return '#93c5fd';
+  return '#dbeafe';
 }
 
 function paintMap(){
@@ -596,10 +626,7 @@ function paintMap(){
 
   lmap.fitBounds(gjLayer.getBounds(),{padding:[16,16]});
 
-  // fill kecamatan filter
-  const kecs = [...new Set(geo.features.map(f=>f.properties.nmkec))].sort();
-  const mkf = document.getElementById('mkf');
-  mkf.innerHTML='<option value="">Semua Kecamatan</option>'+kecs.map(k=>`<option value="${k}">${k}</option>`).join('');
+  set('ml-min','0'); set('ml-max', String(mx));
 }
 
 function mapFilter(){
@@ -676,33 +703,42 @@ function mkLine(id, labels, data){
   });
 }
 
-function trendData(nDays){
+function trendData(data, nDays){
   const now=new Date();
   const labels=[], vals=[];
   for(let i=nDays-1;i>=0;i--){
     const d=new Date(now); d.setDate(d.getDate()-i);
     const ds=d.toLocaleDateString('id-ID');
     labels.push(d.toLocaleDateString('id-ID',{day:'2-digit',month:'short'}));
-    vals.push(rows.filter(r=>{try{return r.Timestamp&&new Date(r.Timestamp).toLocaleDateString('id-ID')===ds;}catch{return false;}}).length);
+    vals.push(data.filter(r=>{try{return r.Timestamp&&new Date(r.Timestamp).toLocaleDateString('id-ID')===ds;}catch{return false;}}).length);
   }
   return {labels,vals};
 }
 
-function buildCharts(){
-  const td14=trendData(14); mkLine('trendC',td14.labels,td14.vals);
-  const td30=trendData(30); mkLine('trend2C',td30.labels,td30.vals);
+function setTrend(d, btn){
+  trDays=d;
+  document.querySelectorAll('#tr-seg .seg-b').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const td=trendData(orows, trDays);
+  mkLine('trendC', td.labels, td.vals);
+}
 
-  const edu=cntBy(rows,'Ijazah Terakhir');
-  mkDonut('eduC', edu); mkDonut('edu2C', edu);
+function buildCharts(data){
+  data = data || rows;
+  const td=trendData(data, trDays);
+  mkLine('trendC', td.labels, td.vals);
 
-  const job=cntBy(rows,'Pekerjaan');
+  const edu=cntBy(data,'Ijazah Terakhir');
+  mkDonut('eduC', edu);
+
+  const job=cntBy(data,'Pekerjaan');
   mkBar('jobC', job.map(e=>e[0]), job.map(e=>e[1]), true);
 
-  const kecE=cntBy(rows,'Kecamatan Domisili',20);
+  const kecE=cntBy(data,'Kecamatan Domisili',20);
   mkBar('kecC', kecE.map(e=>e[0]), kecE.map(e=>e[1]), false);
 
   const ageBk={'<20':0,'20–29':0,'30–39':0,'40–49':0,'≥50':0};
-  rows.forEach(r=>{const a=parseInt(r['Umur']);if(!isNaN(a)){
+  data.forEach(r=>{const a=parseInt(r['Umur']);if(!isNaN(a)){
     if(a<20)ageBk['<20']++;
     else if(a<30)ageBk['20–29']++;
     else if(a<40)ageBk['30–39']++;
@@ -711,6 +747,7 @@ function buildCharts(){
   }});
   mkBar('ageC', Object.keys(ageBk), Object.values(ageBk));
 
+  // requirements section charts (use full rows; not affected by overview filter)
   const sobat=cntBy(rows,'Sudah melakukan pendaftaran/registrasi melalui Sobat Mitra?');
   mkDonut('sobatC', sobat);
 
@@ -721,6 +758,60 @@ function buildCharts(){
     rows.filter(r=>r['Surat Pernyataan Kesiapan']?.trim()).length
   ];
   mkBar('docC', docLbls, docCnt);
+}
+
+// ── OVERVIEW FILTER ───────────────────────────────────────────────────────────
+function uniq(field, base){
+  return [...new Set((base||rows).map(r=>r[field]?.toString().trim()).filter(Boolean))].sort();
+}
+function buildOFilters(){
+  const fill=(id, opts, label)=>{
+    const el=document.getElementById(id); if(!el)return;
+    const cur=el.value;
+    el.innerHTML=`<option value="">${label}</option>`+opts.map(o=>`<option value="${esc(o)}"${o===cur?' selected':''}>${esc(o)}</option>`).join('');
+  };
+  fill('of-kec', uniq('Kecamatan Domisili'), 'Semua Kecamatan');
+  fill('of-edu', uniq('Ijazah Terakhir'), 'Semua Pendidikan');
+  fill('of-job', uniq('Pekerjaan'), 'Semua Pekerjaan');
+  refreshDesaOpts();
+}
+function refreshDesaOpts(){
+  const kec=document.getElementById('of-kec').value;
+  const base = kec ? rows.filter(r=>r['Kecamatan Domisili']?.trim()===kec) : rows;
+  const opts=uniq('Desa Domisili', base);
+  const el=document.getElementById('of-desa'); if(!el)return;
+  const cur=el.value;
+  const stillValid = !cur || opts.includes(cur);
+  el.innerHTML='<option value="">Semua Desa</option>'+opts.map(o=>`<option value="${esc(o)}"${o===cur&&stillValid?' selected':''}>${esc(o)}</option>`).join('');
+  if(!stillValid) el.value='';
+}
+function applyOFilter(){
+  const kec=document.getElementById('of-kec').value;
+  const desa=document.getElementById('of-desa').value;
+  const edu=document.getElementById('of-edu').value;
+  const job=document.getElementById('of-job').value;
+  orows = rows.filter(r=>
+       (!kec ||r['Kecamatan Domisili']?.trim()===kec)
+    && (!desa||r['Desa Domisili']?.trim()===desa)
+    && (!edu ||r['Ijazah Terakhir']?.trim()===edu)
+    && (!job ||r['Pekerjaan']?.trim()===job)
+  );
+  const active = !!(kec||desa||edu||job);
+  document.getElementById('of-reset').style.display = active?'inline-flex':'none';
+  document.getElementById('of-info').textContent = active
+    ? `Menampilkan ${orows.length.toLocaleString('id-ID')} dari ${rows.length.toLocaleString('id-ID')} pendaftar`
+    : '';
+}
+function onOFilter(changed){
+  if(changed==='kec') refreshDesaOpts();
+  applyOFilter();
+  renderOverview();
+}
+function resetOFilter(){
+  ['of-kec','of-desa','of-edu','of-job'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  refreshDesaOpts();
+  applyOFilter();
+  renderOverview();
 }
 
 // ── REQUIREMENTS ──────────────────────────────────────────────────────────────
@@ -754,15 +845,16 @@ function renderReqs(){
 }
 
 // ── DUPLICATE DETECTION ───────────────────────────────────────────────────────
+// Hash NIK & HP dihitung di server (Apps Script). PII tidak pernah sampai ke browser.
 async function detectDups(){
   const nikMap={}, hpMap={};
-  await Promise.all(rows.map(async(r,i)=>{
-    const nh = await sha256(r['NIK (Nomor Induk Kependudukan)']||'');
-    const ph = await sha256(normPhone(r['No Hp (WA)']||''));
+  rows.forEach((r,i)=>{
+    const nh = r.nik_hash || null;
+    const ph = r.hp_hash  || null;
     r._i=i; r._nh=nh; r._ph=ph;
     if(nh){nikMap[nh]=nikMap[nh]||[];nikMap[nh].push(i);}
     if(ph){hpMap[ph]=hpMap[ph]||[];hpMap[ph].push(i);}
-  }));
+  });
 
   const nikG = Object.entries(nikMap).filter(([,v])=>v.length>1);
   const hpG  = Object.entries(hpMap).filter(([,v])=>v.length>1);
@@ -775,9 +867,10 @@ async function detectDups(){
   dupGroups.hp  = hpG.map(([h,idx])=>({type:'No. HP',g:++gn,idx}));
 
   const total = new Set([...nikSet,...hpSet]).size;
-  set('s-dup', total);
   if(total>0){
     const bd=document.getElementById('dupbdg'); bd.textContent=total; bd.style.display='inline-flex';
+  } else {
+    document.getElementById('dupbdg').style.display='none';
   }
 }
 
@@ -930,10 +1023,11 @@ function schedRefresh(){
 }
 
 async function doRefresh(){
+  if(!WEBAPP_URL){ toast('WEBAPP_URL belum diisi','error'); return; }
   show('lov'); ltxt('Memperbarui data...');
   try{
-    const csv = await fetchCSV();
-    rows = csv.filter(r => r && r.Timestamp && String(r.Timestamp).trim());
+    const data = await fetchData();
+    rows = data.filter(r => r && r.Timestamp && String(r.Timestamp).trim());
     frows=[...rows];
     await process();
     toast('Data berhasil diperbarui','success');
