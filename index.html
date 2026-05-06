@@ -474,7 +474,9 @@ async function load(){
       fetchCSV(),
       geo ? Promise.resolve(geo) : fetch(GEO_URL).then(r=>r.json())
     ]);
-    geo = gj; rows = csv; frows=[...rows];
+    geo = gj;
+    rows = csv.filter(r => r && r.Timestamp && String(r.Timestamp).trim());
+    frows = [...rows];
     ltxt('Memproses data...');
     await process();
     document.getElementById('upd').textContent =
@@ -560,11 +562,12 @@ function initMap(){
 function getColor(n, mx){
   if(!n) return '#f1f5f9';
   const t = n/mx;
-  if(t>.75) return '#1e3a8a';
-  if(t>.5)  return '#1e40af';
-  if(t>.25) return '#3b82f6';
-  if(t>.1)  return '#93c5fd';
-  return '#dbeafe';
+  if(t>.80) return '#0c1e5e';
+  if(t>.60) return '#1e3a8a';
+  if(t>.40) return '#2563eb';
+  if(t>.25) return '#60a5fa';
+  if(t>.10) return '#fbbf24';
+  return '#fde68a';
 }
 
 function paintMap(){
@@ -576,7 +579,7 @@ function paintMap(){
   gjLayer = L.geoJSON(geo,{
     style: f=>{
       const n=cnt[f.properties.iddesa]||0;
-      return { fillColor:getColor(n,mx), weight:0.7, opacity:1, color:'#fff', fillOpacity: n?0.85:0.25 };
+      return { fillColor:getColor(n,mx), weight:0.3, opacity:1, color:'#ffffff', fillOpacity: n?0.92:0.45 };
     },
     onEachFeature:(f,layer)=>{
       const p=f.properties, n=cnt[p.iddesa]||0;
@@ -586,7 +589,7 @@ function paintMap(){
         <div class="cnt">${n} pendaftar</div>
         ${n?`<div style="font-size:10px;color:#64748b;margin-top:2px">${((n/rows.length)*100).toFixed(1)}% dari total</div>`:''}
       </div>`);
-      layer.on('mouseover',()=>layer.setStyle({weight:2,color:'#1e40af',fillOpacity:0.95}));
+      layer.on('mouseover',()=>layer.setStyle({weight:1.5,color:'#0f172a',fillOpacity:1}));
       layer.on('mouseout', ()=>gjLayer&&gjLayer.resetStyle(layer));
     }
   }).addTo(lmap);
@@ -604,7 +607,7 @@ function mapFilter(){
   if(!gjLayer)return;
   gjLayer.eachLayer(layer=>{
     const show = !kec || layer.feature.properties.nmkec===kec;
-    layer.setStyle({ opacity:show?1:.12, fillOpacity:show?(layer.feature.properties.iddesa?0.85:0.25):.04 });
+    layer.setStyle({ opacity:show?1:.12, fillOpacity:show?0.92:.04 });
   });
   if(kec){
     const feats = geo.features.filter(f=>f.properties.nmkec===kec);
@@ -929,7 +932,9 @@ function schedRefresh(){
 async function doRefresh(){
   show('lov'); ltxt('Memperbarui data...');
   try{
-    rows=await fetchCSV(); frows=[...rows];
+    const csv = await fetchCSV();
+    rows = csv.filter(r => r && r.Timestamp && String(r.Timestamp).trim());
+    frows=[...rows];
     await process();
     toast('Data berhasil diperbarui','success');
   }catch(e){ toast('Gagal memperbarui data','error'); }
