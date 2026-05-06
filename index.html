@@ -85,9 +85,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 .ml-max{text-align:left}
 .ml-hint{font-size:10px;color:var(--light);margin-top:4px}
 .lf-popup{font-family:system-ui;min-width:150px}
-.lf-popup h4{font-size:14px;font-weight:700;margin-bottom:3px}
+.lf-popup h4{font-size:14px;font-weight:700;margin-bottom:3px;color:#0f172a}
 .lf-popup .sub{font-size:11px;color:#64748b}
 .lf-popup .cnt{font-size:18px;font-weight:800;color:#1e40af;margin-top:6px}
+.leaflet-tooltip.lf-tt{background:#fff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.12);padding:8px 10px;color:#1e293b;font-family:inherit;pointer-events:none}
+.leaflet-tooltip.lf-tt::before{display:none}
 
 /* CHART */
 .cw{position:relative;height:260px}
@@ -288,9 +290,15 @@ select.fs:focus{outline:none;border-color:var(--pl)}
     <div class="sc" style="--ac:#ef4444"><div class="si">⚠️</div><div class="sv" id="s-dup">–</div><div class="sl">Terindikasi Duplikat</div><div class="ss">NIK / No. HP</div></div>
   </div>
 
-  <div class="card sec">
-    <div class="ch"><div class="ct"><div class="ci">🏆</div>Sebaran Pendaftar per Kecamatan</div></div>
-    <div class="cb"><div class="cw-lg"><canvas id="kecC"></canvas></div></div>
+  <div class="g2 sec">
+    <div class="card">
+      <div class="ch"><div class="ct"><div class="ci">🏆</div><span id="kecC-ttl">Sebaran per Kecamatan</span></div></div>
+      <div class="cb"><div class="cw-lg"><canvas id="kecC"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct"><div class="ci">💼</div>Distribusi Pekerjaan</div></div>
+      <div class="cb"><div class="cw-lg"><canvas id="jobC"></canvas></div></div>
+    </div>
   </div>
 
   <div class="card sec">
@@ -314,11 +322,6 @@ select.fs:focus{outline:none;border-color:var(--pl)}
       <div class="cb"><div class="cw"><canvas id="ageC"></canvas></div></div>
     </div>
   </div>
-
-  <div class="card sec">
-    <div class="ch"><div class="ct"><div class="ci">💼</div>Distribusi Pekerjaan</div></div>
-    <div class="cb"><div class="cw"><canvas id="jobC"></canvas></div></div>
-  </div>
 </div>
 
 <!-- ===== MAP ===== -->
@@ -336,7 +339,7 @@ select.fs:focus{outline:none;border-color:var(--pl)}
         <span class="ml-grad"></span>
         <span class="ml-max" id="ml-max">–</span>
       </div>
-      <div class="ml-hint">Klik desa untuk detail • Scroll untuk zoom</div>
+      <div class="ml-hint">Arahkan kursor ke desa untuk detail • Scroll untuk zoom</div>
     </div>
   </div>
 </div>
@@ -613,12 +616,13 @@ function paintMap(){
     },
     onEachFeature:(f,layer)=>{
       const p=f.properties, n=cnt[p.iddesa]||0;
-      layer.bindPopup(`<div class="lf-popup">
-        <h4>${p.nmdesa}</h4>
-        <div class="sub">Kec. ${p.nmkec}</div>
+      const html = `<div class="lf-popup">
+        <h4>${esc(p.nmdesa)}</h4>
+        <div class="sub">Kec. ${esc(p.nmkec)}</div>
         <div class="cnt">${n} pendaftar</div>
         ${n?`<div style="font-size:10px;color:#64748b;margin-top:2px">${((n/rows.length)*100).toFixed(1)}% dari total</div>`:''}
-      </div>`);
+      </div>`;
+      layer.bindTooltip(html, {sticky:true, direction:'auto', className:'lf-tt', opacity:1});
       layer.on('mouseover',()=>layer.setStyle({weight:1.5,color:'#0f172a',fillOpacity:1}));
       layer.on('mouseout', ()=>gjLayer&&gjLayer.resetStyle(layer));
     }
@@ -734,7 +738,20 @@ function buildCharts(data){
   const job=cntBy(data,'Pekerjaan');
   mkBar('jobC', job.map(e=>e[0]), job.map(e=>e[1]), true);
 
-  const kecE=cntBy(data,'Kecamatan Domisili',20);
+  const ofKec = document.getElementById('of-kec')?.value || '';
+  const ofDesa = document.getElementById('of-desa')?.value || '';
+  let kecE, kecTtl;
+  if(ofDesa){
+    kecE  = cntBy(data, 'Desa Domisili', 1);
+    kecTtl = `Sebaran — Desa ${ofDesa}`;
+  } else if(ofKec){
+    kecE  = cntBy(data, 'Desa Domisili', 30);
+    kecTtl = `Sebaran per Desa — Kec. ${ofKec}`;
+  } else {
+    kecE  = cntBy(data, 'Kecamatan Domisili', 20);
+    kecTtl = 'Sebaran per Kecamatan';
+  }
+  set('kecC-ttl', kecTtl);
   mkBar('kecC', kecE.map(e=>e[0]), kecE.map(e=>e[1]), false);
 
   const ageBk={'<20':0,'20–29':0,'30–39':0,'40–49':0,'≥50':0};
