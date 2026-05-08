@@ -198,9 +198,34 @@ select.fs:focus{outline:none;border-color:var(--pl)}
 @media(max-width:540px){.of-row select.fs{flex:1;min-width:0}}
 
 /* SEGMENT */
-.seg{display:inline-flex;background:var(--bg);border:1px solid var(--brd);border-radius:7px;padding:2px;gap:2px}
-.seg-b{padding:5px 10px;font-size:11px;font-weight:600;border:none;background:transparent;color:var(--muted);border-radius:5px;cursor:pointer;transition:var(--tr)}
+.seg{display:inline-flex;background:var(--bg);border:1px solid var(--brd);border-radius:7px;padding:2px;gap:2px;flex-wrap:wrap}
+.seg-b{padding:5px 10px;font-size:11px;font-weight:600;border:none;background:transparent;color:var(--muted);border-radius:5px;cursor:pointer;transition:var(--tr);white-space:nowrap}
 .seg-b.on{background:var(--p);color:#fff}
+
+/* TARGET LIST */
+.tg-list{display:flex;flex-direction:column;gap:5px;max-height:520px;overflow-y:auto;padding-right:4px}
+.tg-row{display:grid;grid-template-columns:minmax(140px,1.4fr) 1fr auto auto;gap:12px;align-items:center;padding:8px 12px;border-radius:8px;background:var(--brll);border:1px solid var(--brd);transition:var(--tr)}
+.tg-row:hover{border-color:var(--pl);background:var(--pll)}
+.tg-name{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+.tg-desa{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt)}
+.tg-kec{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.tg-bar{height:8px;background:var(--brd);border-radius:4px;overflow:hidden}
+.tg-fill{height:100%;border-radius:4px;transition:width .8s ease}
+.tg-num{font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;min-width:52px;text-align:right;color:var(--muted)}
+.tg-pct{font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;min-width:46px;text-align:right}
+.tg-met .tg-fill{background:var(--ok)}.tg-met .tg-pct{color:var(--ok)}
+.tg-partial .tg-fill{background:var(--warn)}.tg-partial .tg-pct{color:var(--warn)}
+.tg-empty .tg-fill{background:var(--err);width:2%!important}.tg-empty .tg-pct{color:var(--err)}
+@media(max-width:540px){.tg-row{grid-template-columns:minmax(0,1fr) auto auto;gap:8px;padding:7px 10px}.tg-bar{display:none}}
+
+/* MAP CONTROLS */
+.map-controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ml-step{font-size:10px;font-weight:700;padding:3px 9px;border-radius:12px;color:#fff;white-space:nowrap}
+.ml-step-r{background:#ef4444}
+.ml-step-o{background:#f97316}
+.ml-step-y{background:#facc15;color:#1e293b}
+.ml-step-l{background:#84cc16}
+.ml-step-g{background:#059669}
 
 /* SCROLLBAR */
 ::-webkit-scrollbar{width:5px;height:5px}
@@ -292,6 +317,7 @@ select.fs:focus{outline:none;border-color:var(--pl)}
     <div class="sc" style="--ac:#10b981"><div class="si">📅</div><div class="sv" id="s-tdy">–</div><div class="sl">Pendaftar Hari Ini</div><div class="ss" id="s-tdys">–</div></div>
     <div class="sc" style="--ac:#f59e0b"><div class="si">🏘️</div><div class="sv" id="s-kec">–</div><div class="sl">Kecamatan Terwakili</div><div class="ss" id="s-kecs">–</div></div>
     <div class="sc" style="--ac:#8b5cf6"><div class="si">🏡</div><div class="sv" id="s-des">–</div><div class="sl">Desa Terwakili</div><div class="ss" id="s-dess">–</div></div>
+    <div class="sc" style="--ac:#059669"><div class="si">🎯</div><div class="sv" id="s-tgt">–</div><div class="sl">Desa Memenuhi Target</div><div class="ss" id="s-tgts">–</div></div>
     <div class="sc" style="--ac:#ef4444"><div class="si">⚠️</div><div class="sv" id="s-dup">–</div><div class="sl">Terindikasi Duplikat</div><div class="ss">NIK / No. HP</div></div>
   </div>
 
@@ -303,6 +329,22 @@ select.fs:focus{outline:none;border-color:var(--pl)}
     <div class="card">
       <div class="ch"><div class="ct"><div class="ci">💼</div>Distribusi Pekerjaan</div></div>
       <div class="cb"><div class="cw-lg"><canvas id="jobC"></canvas></div></div>
+    </div>
+  </div>
+
+  <div class="card sec">
+    <div class="ch">
+      <div class="ct"><div class="ci">🎯</div>Pemenuhan Target Petugas per Desa</div>
+      <div class="seg" id="tg-seg">
+        <button class="seg-b on" onclick="setTgF('all',this)">Semua</button>
+        <button class="seg-b" onclick="setTgF('met',this)">✅ Memenuhi</button>
+        <button class="seg-b" onclick="setTgF('partial',this)">⚠️ Kurang</button>
+        <button class="seg-b" onclick="setTgF('empty',this)">⛔ Belum Ada</button>
+      </div>
+    </div>
+    <div class="cb">
+      <div id="tg-summary" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center"></div>
+      <div id="tg-list" class="tg-list"></div>
     </div>
   </div>
 
@@ -334,15 +376,29 @@ select.fs:focus{outline:none;border-color:var(--pl)}
   <div class="card sec">
     <div class="ch">
       <div class="ct"><div class="ci">🗺️</div>Sebaran Pendaftar per Desa/Kelurahan</div>
-      <select class="fs" id="mkf" onchange="mapFilter()"><option value="">Semua Kecamatan</option></select>
+      <div class="map-controls">
+        <div class="seg" id="mm-seg">
+          <button class="seg-b on" onclick="setMapMode('count',this)">📊 Pendaftar</button>
+          <button class="seg-b" onclick="setMapMode('target',this)">🎯 Pemenuhan Target</button>
+        </div>
+        <select class="fs" id="mkf" onchange="mapFilter()"><option value="">Semua Kecamatan</option></select>
+      </div>
     </div>
     <div id="map"></div>
     <div class="map-legend">
-      <div class="ml-row">
+      <div class="ml-row" id="ml-count">
         <span class="ml-ttl">Jumlah Pendaftar</span>
         <span class="ml-min" id="ml-min">0</span>
         <span class="ml-grad"></span>
         <span class="ml-max" id="ml-max">–</span>
+      </div>
+      <div class="ml-row" id="ml-target" style="display:none">
+        <span class="ml-ttl">Pemenuhan Target</span>
+        <span class="ml-step ml-step-r">⛔ &lt;25%</span>
+        <span class="ml-step ml-step-o">25–49%</span>
+        <span class="ml-step ml-step-y">50–74%</span>
+        <span class="ml-step ml-step-l">75–99%</span>
+        <span class="ml-step ml-step-g">✅ ≥100%</span>
       </div>
       <div class="ml-hint">Arahkan kursor ke desa untuk detail • Scroll untuk zoom</div>
     </div>
@@ -458,6 +514,10 @@ let rTimer = null, cTimer = null, nextAt = 0;
 let mapPainted = false;
 let trDays = 14;
 let orows = [];
+let targets = [];
+let targetByIdDesa = {};
+let mapMode = 'count';
+let tgF = 'all';
 
 // ── THEME ─────────────────────────────────────────────────────────────────────
 function toggleDark(){
@@ -510,11 +570,15 @@ async function load(){
     if(!WEBAPP_URL){
       throw new Error('WEBAPP_URL belum diisi. Lihat apps_script/Code.gs untuk cara deploy.');
     }
-    const [data, gj] = await Promise.all([
+    const [data, gj, tg] = await Promise.all([
       fetchData(),
-      geo ? Promise.resolve(geo) : fetch(GEO_URL).then(r=>r.json())
+      geo ? Promise.resolve(geo) : fetch(GEO_URL).then(r=>r.json()),
+      targets.length ? Promise.resolve(targets) : fetch('excel/targets.json').then(r=>r.json()).catch(()=>[])
     ]);
     geo = gj;
+    targets = tg || [];
+    targetByIdDesa = {};
+    targets.forEach(t => { targetByIdDesa[t.iddesa] = t.target; });
     rows = data.filter(r => r && r.Timestamp && String(r.Timestamp).trim());
     frows = [...rows];
     ltxt('Memproses data...');
@@ -558,6 +622,7 @@ async function process(){
 function renderOverview(){
   calcStats(orows);
   buildCharts(orows);
+  renderTargetList();
 }
 
 function fillMapKecFilter(){
@@ -591,6 +656,15 @@ function calcStats(data){
   set('s-des', desas.size);
   set('s-dess', `dari ${allDesa} desa/kel`);
   set('s-dup', dupN);
+
+  // target met
+  const cntById = {};
+  data.forEach(r=>{ const id=r['iddesa']; if(id) cntById[id]=(cntById[id]||0)+1; });
+  const ofKec = document.getElementById('of-kec')?.value || '';
+  const tgScope = ofKec ? targets.filter(t=>t.kec.toUpperCase()===ofKec.toUpperCase()) : targets;
+  const desaMet = tgScope.filter(t => t.target>0 && (cntById[t.iddesa]||0) >= t.target).length;
+  set('s-tgt', desaMet);
+  set('s-tgts', `dari ${tgScope.length} desa`);
 }
 
 // ── MAP ───────────────────────────────────────────────────────────────────────
@@ -603,7 +677,16 @@ function initMap(){
   L.control.attribution({prefix:'© OpenStreetMap © CartoDB'}).addTo(lmap);
 }
 
-function getColor(n, mx){
+function getColor(n, mx, target){
+  if(mapMode==='target'){
+    if(!target) return '#e5e7eb';
+    if(n>=target) return '#059669';
+    const r = n/target;
+    if(r>=.75) return '#84cc16';
+    if(r>=.50) return '#facc15';
+    if(r>=.25) return '#f97316';
+    return '#ef4444';
+  }
   if(!n) return '#f1f5f9';
   const t = n/mx;
   if(t>.80) return '#1e3a8a';
@@ -622,16 +705,29 @@ function paintMap(){
 
   gjLayer = L.geoJSON(geo,{
     style: f=>{
-      const n=cnt[f.properties.iddesa]||0;
-      return { fillColor:getColor(n,mx), weight:0.3, opacity:1, color:'#ffffff', fillOpacity: n?0.92:0.45 };
+      const id=f.properties.iddesa;
+      const n=cnt[id]||0;
+      const tgt=targetByIdDesa[id]||0;
+      const fop = mapMode==='target'
+        ? (tgt ? 0.92 : 0.35)
+        : (n ? 0.92 : 0.45);
+      return { fillColor:getColor(n,mx,tgt), weight:0.3, opacity:1, color:'#ffffff', fillOpacity: fop };
     },
     onEachFeature:(f,layer)=>{
-      const p=f.properties, n=cnt[p.iddesa]||0;
+      const p=f.properties, n=cnt[p.iddesa]||0, tgt=targetByIdDesa[p.iddesa]||0;
+      const pct = tgt>0 ? Math.round(n/tgt*100) : 0;
+      let statusHtml = '';
+      if(tgt>0){
+        if(n>=tgt) statusHtml = `<div style="font-size:11px;font-weight:700;margin-top:4px;color:#059669">✅ Memenuhi target (${pct}%)</div>`;
+        else if(n===0) statusHtml = `<div style="font-size:11px;font-weight:700;margin-top:4px;color:#dc2626">⛔ Belum ada pendaftar</div>`;
+        else statusHtml = `<div style="font-size:11px;font-weight:700;margin-top:4px;color:#d97706">⚠️ Kurang ${tgt-n} (${pct}%)</div>`;
+      }
       const html = `<div class="lf-popup">
         <h4>${esc(p.nmdesa)}</h4>
         <div class="sub">Kec. ${esc(p.nmkec)}</div>
         <div class="cnt">${n} pendaftar</div>
-        ${n?`<div style="font-size:10px;color:#64748b;margin-top:2px">${((n/rows.length)*100).toFixed(1)}% dari total</div>`:''}
+        ${tgt>0?`<div style="font-size:11px;color:#64748b;margin-top:4px">Target: <b>${tgt}</b> petugas</div>`:''}
+        ${statusHtml}
       </div>`;
       layer.bindTooltip(html, {sticky:true, direction:'auto', className:'lf-tt', opacity:1});
       layer.on('mouseover',()=>layer.setStyle({weight:1.5,color:'#0f172a',fillOpacity:1}));
@@ -642,6 +738,22 @@ function paintMap(){
   lmap.fitBounds(gjLayer.getBounds(),{padding:[16,16]});
 
   set('ml-min','0'); set('ml-max', String(mx));
+  document.getElementById('ml-count').style.display = mapMode==='count' ? 'flex' : 'none';
+  document.getElementById('ml-target').style.display = mapMode==='target' ? 'flex' : 'none';
+}
+
+function setMapMode(m, btn){
+  mapMode = m;
+  document.querySelectorAll('#mm-seg .seg-b').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  if(gjLayer && geo){
+    paintMap();
+    const kec = document.getElementById('mkf').value;
+    if(kec) gjLayer.eachLayer(layer=>{
+      const show = layer.feature.properties.nmkec===kec;
+      layer.setStyle({ opacity:show?1:.12, fillOpacity:show?0.92:.04 });
+    });
+  }
 }
 
 function mapFilter(){
@@ -870,6 +982,74 @@ function renderReqs(){
       <div style="font-size:10px;color:var(--muted);margin-top:3px">${n} / ${tot}</div>
     </div>`;
   }).join('');
+}
+
+// ── TARGET FULFILLMENT ────────────────────────────────────────────────────────
+function setTgF(f, btn){
+  tgF = f;
+  document.querySelectorAll('#tg-seg .seg-b').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderTargetList();
+}
+
+function renderTargetList(){
+  if(!targets.length){
+    document.getElementById('tg-list').innerHTML = `<div class="es"><div class="es-i">📭</div>Data target belum dimuat</div>`;
+    document.getElementById('tg-summary').innerHTML = '';
+    return;
+  }
+  const cnt={}; orows.forEach(r=>{const id=r['iddesa']; if(id) cnt[id]=(cnt[id]||0)+1;});
+  const ofKec = document.getElementById('of-kec')?.value || '';
+  const ofDesa= document.getElementById('of-desa')?.value || '';
+  let scope = targets.slice();
+  if(ofKec)  scope = scope.filter(t=>t.kec.toUpperCase()===ofKec.toUpperCase());
+  if(ofDesa) scope = scope.filter(t=>t.desa.toUpperCase()===ofDesa.toUpperCase());
+
+  const items = scope.map(t=>{
+    const actual = cnt[t.iddesa]||0;
+    const pct = t.target>0 ? actual/t.target : 0;
+    const status = (t.target>0 && actual>=t.target) ? 'met' : (actual===0 ? 'empty' : 'partial');
+    return {...t, actual, pct, status};
+  });
+
+  const met=items.filter(i=>i.status==='met').length;
+  const part=items.filter(i=>i.status==='partial').length;
+  const emp=items.filter(i=>i.status==='empty').length;
+  const totT=items.reduce((s,i)=>s+i.target,0);
+  const totA=items.reduce((s,i)=>s+i.actual,0);
+  const totPct = totT>0 ? Math.round(totA/totT*100) : 0;
+  document.getElementById('tg-summary').innerHTML = `
+    <span class="bdg bg">✅ Memenuhi: ${met}</span>
+    <span class="bdg by">⚠️ Belum Cukup: ${part}</span>
+    <span class="bdg br">⛔ Belum Ada: ${emp}</span>
+    <span class="bdg bw" style="margin-left:auto">Total: ${totA} / ${totT} petugas (${totPct}%)</span>
+  `;
+
+  let view = items;
+  if(tgF!=='all') view = items.filter(i=>i.status===tgF);
+
+  view.sort((a,b)=>{
+    if(tgF==='all'){
+      const o={empty:0,partial:1,met:2};
+      if(a.status!==b.status) return o[a.status]-o[b.status];
+    }
+    if(a.status==='partial' && b.status==='partial') return a.pct - b.pct;
+    return b.target - a.target;
+  });
+
+  const ic = {met:'✅', partial:'⚠️', empty:'⛔'};
+  document.getElementById('tg-list').innerHTML = view.length ? view.map(i=>{
+    const w = Math.min(100, Math.round(i.pct*100));
+    return `<div class="tg-row tg-${i.status}">
+      <div class="tg-name">
+        <span class="tg-desa">${ic[i.status]} ${esc(i.desa)}</span>
+        <span class="tg-kec">Kec. ${esc(i.kec)}</span>
+      </div>
+      <div class="tg-bar"><div class="tg-fill" style="width:${w}%"></div></div>
+      <div class="tg-num">${i.actual} / ${i.target}</div>
+      <div class="tg-pct">${Math.round(i.pct*100)}%</div>
+    </div>`;
+  }).join('') : `<div class="es"><div class="es-i">🔍</div>Tidak ada desa pada filter ini</div>`;
 }
 
 // ── DUPLICATE DETECTION ───────────────────────────────────────────────────────
