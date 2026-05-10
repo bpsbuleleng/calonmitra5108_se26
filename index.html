@@ -486,7 +486,6 @@ select.fs:focus{outline:none;border-color:var(--pl)}
       <div class="ct"><div class="ci">🏡</div>Rekap per Desa/Kelurahan</div>
       <div style="display:flex;gap:8px;align-items:center">
         <div class="sw" style="min-width:160px;max-width:220px"><input class="si2" id="rekap-srch" placeholder="Cari desa / kecamatan..." oninput="renderRekapDesa()"></div>
-        <select class="fs" id="rekap-kec-f" onchange="renderRekapDesa()"><option value="">Semua Kecamatan</option></select>
         <button class="btn btn-o" onclick="exportRekapDesa()">⬇️ Export</button>
       </div>
     </div>
@@ -588,6 +587,21 @@ let rekapSort = {key:'tot', dir:'desc'};
 let rekapDesaPage = 1;
 
 function getBase(){ return dedup ? cleanRows : rows; }
+
+// Resolve a kecamatan filter value (from spreadsheet, possibly different format)
+// to the canonical kec name used in targets.json.
+// Strips common prefixes like "Kec." and normalizes case.
+function resolveKec(val){
+  if(!val) return '';
+  const norm = s => s.trim().replace(/^kec(amatan)?[.\s]*/i,'').replace(/\s+/g,' ').toUpperCase();
+  const direct = targets.find(t=>norm(t.kec)===norm(val));
+  if(direct) return direct.kec;
+  // Infer: which kec in targets has desa names that appear in orows?
+  const desaSet = new Set(orows.map(r=>(r['Desa Domisili']||'').trim().toUpperCase()).filter(Boolean));
+  if(!desaSet.size) return '';
+  const inf = targets.find(t=>desaSet.has(t.desa.trim().toUpperCase()));
+  return inf ? inf.kec : '';
+}
 
 function earliestIdx(indices){
   return indices.reduce((a,b)=>{
@@ -781,11 +795,12 @@ function calcStats(data){
   set('s-dup', dupTotal);
 
   // target met
-  const cntById = {};
-  data.forEach(r=>{ const id=r['iddesa']; if(id) cntById[id]=(cntById[id]||0)+1; });
+  const cntByNm2 = {};
+  data.forEach(r=>{ const nm=(r['Desa Domisili']||'').trim().toUpperCase(); if(nm) cntByNm2[nm]=(cntByNm2[nm]||0)+1; });
   const ofKec = document.getElementById('of-kec')?.value || '';
-  const tgScope = ofKec ? targets.filter(t=>t.kec.toUpperCase()===ofKec.toUpperCase()) : targets;
-  const desaMet = tgScope.filter(t => t.target>0 && (cntById[t.iddesa]||0) >= t.target).length;
+  const canonKec0 = resolveKec(ofKec);
+  const tgScope = canonKec0 ? targets.filter(t=>t.kec===canonKec0) : targets;
+  const desaMet = tgScope.filter(t => t.target>0 && (cntByNm2[t.desa.trim().toUpperCase()]||0) >= t.target).length;
   set('s-tgt', desaMet);
   set('s-tgts', `dari ${tgScope.length} desa`);
 }
@@ -1071,6 +1086,7 @@ function onOFilter(changed){
   if(changed==='kec') refreshDesaOpts();
   applyOFilter();
   renderOverview();
+  if(document.getElementById('tsec-rekap').classList.contains('on')) renderRekapDesa();
 }
 function resetOFilter(){
   ['of-kec','of-desa','of-edu','of-job'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
@@ -1124,15 +1140,17 @@ function renderTargetList(){
     document.getElementById('tg-summary').innerHTML = '';
     return;
   }
-  const cnt={}; orows.forEach(r=>{const id=r['iddesa']; if(id) cnt[id]=(cnt[id]||0)+1;});
+  const cntByNm = {};
+  orows.forEach(r=>{ const nm=(r['Desa Domisili']||'').trim().toUpperCase(); if(nm) cntByNm[nm]=(cntByNm[nm]||0)+1; });
   const ofKec = document.getElementById('of-kec')?.value || '';
   const ofDesa= document.getElementById('of-desa')?.value || '';
+  const canonKec = resolveKec(ofKec);
   let scope = targets.slice();
-  if(ofKec)  scope = scope.filter(t=>t.kec.toUpperCase()===ofKec.toUpperCase());
-  if(ofDesa) scope = scope.filter(t=>t.desa.toUpperCase()===ofDesa.toUpperCase());
+  if(ofDesa)    scope = scope.filter(t=>t.desa.trim().toUpperCase()===ofDesa.trim().toUpperCase());
+  else if(canonKec) scope = scope.filter(t=>t.kec===canonKec);
 
   const items = scope.map(t=>{
-    const actual = cnt[t.iddesa]||0;
+    const actual = cntByNm[t.desa.trim().toUpperCase()]||0;
     const pct = t.target>0 ? actual/t.target : 0;
     const status = (t.target>0 && actual>=t.target) ? 'met' : (actual===0 ? 'empty' : 'partial');
     return {...t, actual, pct, status};
@@ -1457,12 +1475,6 @@ function renderRekap(){
   _rekapCache = null; // invalidate
   renderRekapKec();
   renderRekapDesa();
-  // populate kec filter
-  const kecs = [...new Set(targets.map(t=>t.kec))].sort();
-  const el = document.getElementById('rekap-kec-f'); if(!el)return;
-  const cur = el.value;
-  el.innerHTML = '<option value="">Semua Kecamatan</option>' +
-    kecs.map(k=>`<option value="${esc(k)}"${k===cur?' selected':''}>${esc(k)}</option>`).join('');
 }
 
 const RKEC_COLS = {
@@ -1526,10 +1538,10 @@ function renderRekapDesa(){
   _rekapCache = null;
   const {desaRows} = getRekap();
   const q = (document.getElementById('rekap-srch')?.value||'').toLowerCase();
-  const kf = document.getElementById('rekap-kec-f')?.value||'';
+  const canonKec = resolveKec(document.getElementById('of-kec')?.value||'');
   rekapDesaRows = desaRows.filter(d=>{
     const matchQ = !q || d.desa.toLowerCase().includes(q) || d.kec.toLowerCase().includes(q);
-    const matchK = !kf || d.kec.toUpperCase()===kf.toUpperCase();
+    const matchK = !canonKec || d.kec===canonKec;
     return matchQ && matchK;
   });
   const get = RDESA_COLS[rekapSort.key];
