@@ -19,7 +19,7 @@ function calcStats(data){
     try{ return r.Timestamp && new Date(r.Timestamp).toLocaleDateString('id-ID')===todayStr; }catch{return false;}
   }).length;
   const kecs = new Set(data.map(r=>r['Kecamatan Domisili']?.trim()).filter(Boolean));
-  const desas = new Set(data.map(r=>(r['Desa Domisili']||r['nmdesa']||'').trim().toUpperCase()).filter(Boolean));
+  const desas = new Set(data.map(r=>normDesa(r['Desa Domisili']||r['nmdesa']||'')).filter(Boolean));
   const allKec = geo ? new Set(geo.features.map(f=>f.properties.nmkec)).size : '?';
   const allDesa = geo ? geo.features.length : 148;
   const dupTotal = rows.filter(r=>r._dn||r._dh).length;
@@ -38,11 +38,11 @@ function calcStats(data){
   set('s-dup', dupTotal);
 
   const cntByNm2 = {};
-  data.forEach(r=>{ const nm=(r['Desa Domisili']||'').trim().toUpperCase(); if(nm) cntByNm2[nm]=(cntByNm2[nm]||0)+1; });
+  data.forEach(r=>{ const nm=normDesa(r['Desa Domisili']||r['nmdesa']||''); if(nm) cntByNm2[nm]=(cntByNm2[nm]||0)+1; });
   const ofKec = document.getElementById('of-kec')?.value || '';
   const canonKec0 = resolveKec(ofKec);
   const tgScope = canonKec0 ? targets.filter(t=>t.kec===canonKec0) : targets;
-  const desaMet = tgScope.filter(t => t.target>0 && (cntByNm2[t.desa.trim().toUpperCase()]||0) >= t.target).length;
+  const desaMet = tgScope.filter(t => t.target>0 && (cntByNm2[normDesa(t.desa)]||0) >= t.target).length;
   set('s-tgt', desaMet);
   set('s-tgts', `dari ${tgScope.length} desa`);
 }

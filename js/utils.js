@@ -1,5 +1,16 @@
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function set(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+
+// Normalize desa name for cross-source matching (form data vs targets vs GeoJSON).
+// Strips administrative prefixes ("Desa", "Kel.", "Kelurahan") that appear in form data
+// but are absent from the canonical target/GeoJSON names.
+function normDesa(s){
+  if(!s) return '';
+  return String(s).trim()
+    .replace(/^(desa|kel\.?|kelurahan|dusun|dsn\.?)\s+/i,'')
+    .replace(/\s+/g,' ')
+    .toUpperCase();
+}
 function show(id){const e=document.getElementById(id);if(e)e.style.display='flex';}
 function hide(id){const e=document.getElementById(id);if(e)e.style.display='none';}
 function ltxt(t){const e=document.getElementById('ltxt');if(e)e.textContent=t;}

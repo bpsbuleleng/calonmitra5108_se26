@@ -1,46 +1,29 @@
 function buildRekapData(){
-  const base = getBase();
-
-  const _kecNorm = v => {
-    if(!v) return '';
-    const s = v.trim().replace(/^kec(amatan)?[.\s]+/i,'').replace(/\s+/g,' ').toUpperCase();
-    const m = targets.find(t=>t.kec===s);
-    return m ? m.kec : s;
-  };
-
-  const desaMap = {};
-  base.forEach(r=>{
-    const nm = (r['Desa Domisili']||r['nmdesa']||'').trim();
-    if(!nm) return;
-    const key = nm.toUpperCase();
-    if(!desaMap[key]) desaMap[key] = {desa:nm, kec:_kecNorm(r['Kecamatan Domisili']||''), tot:0};
-    desaMap[key].tot++;
+  // Count form submissions per normalized desa name.
+  // Using normDesa() handles prefixes like "Kel.", "Desa ", casing differences, etc.
+  const cntByNm = {};
+  getBase().forEach(r=>{
+    const nm = normDesa(r['Desa Domisili']||r['nmdesa']||'');
+    if(nm) cntByNm[nm] = (cntByNm[nm]||0) + 1;
   });
 
-  const seenDesaUC = new Set(Object.keys(desaMap));
-  const desaRows = Object.values(desaMap).map(d=>{
-    const tgtEntry = targets.find(t=>t.desa.trim().toUpperCase()===d.desa.trim().toUpperCase());
-    const tgt = tgtEntry?.target || 0;
-    const kec = tgtEntry?.kec || d.kec;
-    const pct = tgt > 0 ? d.tot/tgt : 0;
-    const status = tgt===0 ? 'nodata' : d.tot===0 ? 'empty' : d.tot>=tgt ? 'met' : 'partial';
-    return {iddesa: tgtEntry?.iddesa||'', desa:d.desa, kec, tot:d.tot, tgt, pct, status};
+  // Build desaRows strictly from targets — guarantees exactly 148 rows.
+  // Each target desa gets the pendaftar count looked up by normalized name.
+  const desaRows = targets.map(t=>{
+    const tot = cntByNm[normDesa(t.desa)] || 0;
+    const pct = t.target > 0 ? tot/t.target : 0;
+    const status = t.target===0 ? 'nodata' : tot===0 ? 'empty' : tot>=t.target ? 'met' : 'partial';
+    return {iddesa:t.iddesa, desa:t.desa, kec:t.kec, tot, tgt:t.target, pct, status};
   });
 
-  targets.forEach(t=>{
-    if(!seenDesaUC.has(t.desa.trim().toUpperCase())){
-      desaRows.push({iddesa:t.iddesa, desa:t.desa, kec:t.kec, tot:0, tgt:t.target, pct:0, status:t.target>0?'empty':'nodata'});
-    }
-  });
-
+  // Aggregate to kecamatan — kec values are all canonical from targets, so always 9 rows.
   const kecMap = {};
   desaRows.forEach(d=>{
-    const kc = d.kec || '–';
-    if(!kecMap[kc]) kecMap[kc] = {kec:kc, tot:0, tgt:0, desa:0, met:0};
-    kecMap[kc].tot += d.tot;
-    kecMap[kc].tgt += d.tgt;
-    kecMap[kc].desa++;
-    if(d.status==='met') kecMap[kc].met++;
+    if(!kecMap[d.kec]) kecMap[d.kec] = {kec:d.kec, tot:0, tgt:0, desa:0, met:0};
+    kecMap[d.kec].tot += d.tot;
+    kecMap[d.kec].tgt += d.tgt;
+    kecMap[d.kec].desa++;
+    if(d.status==='met') kecMap[d.kec].met++;
   });
   const kecRows = Object.values(kecMap).map(k=>({...k, pct: k.tgt>0 ? k.tot/k.tgt : 0}));
 
@@ -252,15 +235,15 @@ function renderTargetList(){
     return;
   }
   const cntByNm = {};
-  getBase().forEach(r=>{ const nm=(r['Desa Domisili']||'').trim().toUpperCase(); if(nm) cntByNm[nm]=(cntByNm[nm]||0)+1; });
+  getBase().forEach(r=>{ const nm=normDesa(r['Desa Domisili']||r['nmdesa']||''); if(nm) cntByNm[nm]=(cntByNm[nm]||0)+1; });
   const rkecF  = document.getElementById('rkec-f')?.value  || '';
   const rdesaF = document.getElementById('rdesa-f')?.value || '';
   let scope = targets.slice();
-  if(rdesaF)      scope = scope.filter(t=>t.desa.trim().toUpperCase()===rdesaF.trim().toUpperCase());
+  if(rdesaF)      scope = scope.filter(t=>normDesa(t.desa)===normDesa(rdesaF));
   else if(rkecF)  scope = scope.filter(t=>t.kec===rkecF);
 
   const items = scope.map(t=>{
-    const actual = cntByNm[t.desa.trim().toUpperCase()]||0;
+    const actual = cntByNm[normDesa(t.desa)]||0;
     const pct = t.target>0 ? actual/t.target : 0;
     const status = (t.target>0 && actual>=t.target) ? 'met' : (actual===0 ? 'empty' : 'partial');
     return {...t, actual, pct, status};

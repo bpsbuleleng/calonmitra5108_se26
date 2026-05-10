@@ -30,12 +30,12 @@ function getColor(n, mx, target){
 function paintMap(){
   const nmToId = {};
   if(geo) geo.features.forEach(f=>{
-    const nm = (f.properties.nmdesa||'').trim().toUpperCase();
+    const nm = normDesa(f.properties.nmdesa||'');
     if(nm) nmToId[nm] = f.properties.iddesa;
   });
   const cnt = {};
   getBase().forEach(r=>{
-    const nm = (r['Desa Domisili']||r['nmdesa']||'').trim().toUpperCase();
+    const nm = normDesa(r['Desa Domisili']||r['nmdesa']||'');
     const id = (nm && nmToId[nm]) || r['iddesa'];
     if(id) cnt[id] = (cnt[id]||0)+1;
   });
