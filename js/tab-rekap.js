@@ -23,26 +23,18 @@ function buildRekapData(){
     if(nm) cntByNm[nm] = (cntByNm[nm]||0) + 1;
   });
 
-  // One-shot diagnostic toast when rows exist but nothing matched any target
-  if(!window.__rkDbg2){
-    window.__rkDbg2 = true;
-    const totalCnt = Object.values(cntByNm).reduce((a,b)=>a+b,0);
-    console.log('[Rekap] getBase().length:', base.length, '| cntByNm keys:', Object.keys(cntByNm).length, '| totalCnt:', totalCnt);
-    if(base.length > 0){
-      console.log('[Rekap] Field names row[0]:', Object.keys(base[0]));
-      console.log('[Rekap] 5 baris pertama raw_desa:', base.slice(0,5).map(r=>({
-        field: resolveDesaField(r), raw: r[resolveDesaField(r)], norm: normDesa(getDesaVal(r))
-      })));
-      console.log('[Rekap] cntByNm keys (10 pertama):', Object.keys(cntByNm).slice(0,10));
-      console.log('[Rekap] 5 target lookups:', targets.slice(0,5).map(t=>({
-        desa: t.desa, norm: normDesa(t.desa), hit: cntByNm[normDesa(t.desa)]||0
-      })));
-      if(totalCnt === 0 && base.length > 0){
-        const desaKeys = Object.keys(base[0]).filter(k=>/desa/i.test(k));
-        toast(`⚠️ Penghitungan desa = 0. Kolom desa di data: ${desaKeys.join(' | ')||'–'} (lihat console)`, 'warning');
-      }
-    }
-  }
+  // Populate persistent debug info — rendered by showRekapDbg() if counts stay at 0
+  const totalCnt = Object.values(cntByNm).reduce((a,b)=>a+b,0);
+  window._rkDbgInfo = {
+    baseLen: base.length,
+    totalCnt,
+    fieldDetected: base.length ? resolveDesaField(base[0]) : '(no rows)',
+    sampleRaw:  base.slice(0,3).map(r=>r[resolveDesaField(r)]||''),
+    sampleNorm: base.slice(0,3).map(r=>normDesa(getDesaVal(r))),
+    cntKeys:    Object.keys(cntByNm).slice(0,8),
+    tgtSample:  targets.slice(0,5).map(t=>normDesa(t.desa)+' → '+( cntByNm[normDesa(t.desa)]||0 ))
+  };
+  console.log('[Rekap dbg]', window._rkDbgInfo);
 
   const desaRows = targets.map(t=>{
     const tot = cntByNm[normDesa(t.desa)] || 0;
@@ -96,6 +88,28 @@ function setRSort(key, th){
   renderRekapDesa();
 }
 
+function showRekapDbg(kecRows){
+  const allZero = kecRows.length > 0 && kecRows.every(k=>k.tot===0);
+  let el = document.getElementById('rkdbg');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'rkdbg';
+    el.style.cssText = 'background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:12px 16px;margin:10px 0;font-size:12px;font-family:monospace;line-height:1.6;display:none';
+    const card = document.querySelector('#tsec-rekap .card.sec');
+    if(card) card.prepend(el);
+  }
+  if(!allZero){ el.style.display='none'; return; }
+  const d = window._rkDbgInfo || {};
+  el.style.display = 'block';
+  el.innerHTML = `<b style="font-size:13px">⚠️ Debug: semua pendaftar = 0</b><br>
+    Baris data (getBase): <b>${d.baseLen??'?'}</b> &nbsp;|&nbsp; Nilai desa terekstrak: <b>${d.totalCnt??'?'}</b><br>
+    Kolom desa terdeteksi: <b>${esc(d.fieldDetected??'?')}</b><br>
+    Nilai mentah [0–2]: <b>${(d.sampleRaw||[]).map(v=>esc(v||'(kosong)')).join(' | ')}</b><br>
+    Setelah normDesa:   <b>${(d.sampleNorm||[]).map(v=>esc(v||'(kosong)')).join(' | ')}</b><br>
+    Kunci cntByNm:      <b>${(d.cntKeys||[]).map(esc).join(' | ')||'(kosong)'}</b><br>
+    Target sample (norm → hit): <b>${(d.tgtSample||[]).map(esc).join(' | ')}</b>`;
+}
+
 function renderRekapKec(){
   const {kecRows} = getRekap();
   const rkecF = document.getElementById('rkec-f')?.value || '';
@@ -123,6 +137,7 @@ function renderRekapKec(){
       </td>
     </tr>`;
   }).join('') || `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted)">Belum ada data</td></tr>`;
+  showRekapDbg(sorted);
 }
 
 const RDESA_COLS = {
