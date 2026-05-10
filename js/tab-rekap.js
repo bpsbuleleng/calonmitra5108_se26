@@ -1,29 +1,47 @@
+// Dynamically resolve the desa field name from a row object.
+// Tries exact canonical name first, then scans for any field containing "desa"
+// (but not "kecamatan") so the dashboard works regardless of exact question wording.
+let _desaFieldCache = null;
+function resolveDesaField(r){
+  if(_desaFieldCache) return _desaFieldCache;
+  const keys = Object.keys(r);
+  _desaFieldCache =
+    (keys.find(k => k === 'Desa Domisili')) ||
+    (keys.find(k => /desa/i.test(k) && !/kecamatan/i.test(k))) ||
+    'Desa Domisili';
+  console.log('[Rekap] Field desa terdeteksi:', _desaFieldCache);
+  return _desaFieldCache;
+}
+function getDesaVal(r){ return r[resolveDesaField(r)] || r['nmdesa'] || ''; }
+
 function buildRekapData(){
+  _desaFieldCache = null; // reset on each full rebuild
   const cntByNm = {};
-  getBase().forEach(r=>{
-    const nm = normDesa(r['Desa Domisili']||r['nmdesa']||'');
+  const base = getBase();
+  base.forEach(r=>{
+    const nm = normDesa(getDesaVal(r));
     if(nm) cntByNm[nm] = (cntByNm[nm]||0) + 1;
   });
 
-  // one-shot diagnostic — buka browser console (F12) untuk melihat hasilnya
-  if(!window.__rkDbg){
-    window.__rkDbg = true;
-    const base = getBase();
-    console.log('[Rekap DEBUG] Jumlah baris getBase():', base.length);
+  // One-shot diagnostic toast when rows exist but nothing matched any target
+  if(!window.__rkDbg2){
+    window.__rkDbg2 = true;
+    const totalCnt = Object.values(cntByNm).reduce((a,b)=>a+b,0);
+    console.log('[Rekap] getBase().length:', base.length, '| cntByNm keys:', Object.keys(cntByNm).length, '| totalCnt:', totalCnt);
     if(base.length > 0){
-      console.log('[Rekap DEBUG] Field names row[0]:', Object.keys(base[0]));
-      const sample = base.slice(0,5).map(r=>({
-        raw_desa: r['Desa Domisili'],
-        norm_desa: normDesa(r['Desa Domisili']||''),
-        kec: r['Kecamatan Domisili']
-      }));
-      console.log('[Rekap DEBUG] 5 baris pertama:', sample);
+      console.log('[Rekap] Field names row[0]:', Object.keys(base[0]));
+      console.log('[Rekap] 5 baris pertama raw_desa:', base.slice(0,5).map(r=>({
+        field: resolveDesaField(r), raw: r[resolveDesaField(r)], norm: normDesa(getDesaVal(r))
+      })));
+      console.log('[Rekap] cntByNm keys (10 pertama):', Object.keys(cntByNm).slice(0,10));
+      console.log('[Rekap] 5 target lookups:', targets.slice(0,5).map(t=>({
+        desa: t.desa, norm: normDesa(t.desa), hit: cntByNm[normDesa(t.desa)]||0
+      })));
+      if(totalCnt === 0 && base.length > 0){
+        const desaKeys = Object.keys(base[0]).filter(k=>/desa/i.test(k));
+        toast(`⚠️ Penghitungan desa = 0. Kolom desa di data: ${desaKeys.join(' | ')||'–'} (lihat console)`, 'warning');
+      }
     }
-    console.log('[Rekap DEBUG] cntByNm keys (10 pertama):', Object.keys(cntByNm).slice(0,10));
-    const tNorm = targets.slice(0,5).map(t=>({
-      desa: t.desa, norm: normDesa(t.desa), hitCount: cntByNm[normDesa(t.desa)]||0
-    }));
-    console.log('[Rekap DEBUG] 5 targets lookup pertama:', tNorm);
   }
 
   const desaRows = targets.map(t=>{
@@ -252,7 +270,7 @@ function renderTargetList(){
     return;
   }
   const cntByNm = {};
-  getBase().forEach(r=>{ const nm=normDesa(r['Desa Domisili']||r['nmdesa']||''); if(nm) cntByNm[nm]=(cntByNm[nm]||0)+1; });
+  getBase().forEach(r=>{ const nm=normDesa(getDesaVal(r)); if(nm) cntByNm[nm]=(cntByNm[nm]||0)+1; });
   const rkecF  = document.getElementById('rkec-f')?.value  || '';
   const rdesaF = document.getElementById('rdesa-f')?.value || '';
   let scope = targets.slice();

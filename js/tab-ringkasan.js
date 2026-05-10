@@ -4,7 +4,7 @@ function resolveKec(val){
   const norm = s => s.trim().replace(/^kec(amatan)?[.\s]*/i,'').replace(/\s+/g,' ').toUpperCase();
   const direct = targets.find(t=>norm(t.kec)===norm(val));
   if(direct) return direct.kec;
-  const desaSet = new Set(orows.map(r=>(r['Desa Domisili']||'').trim().toUpperCase()).filter(Boolean));
+  const desaSet = new Set(orows.map(r=>getDesaVal(r).trim().toUpperCase()).filter(Boolean));
   if(!desaSet.size) return '';
   const inf = targets.find(t=>desaSet.has(t.desa.trim().toUpperCase()));
   return inf ? inf.kec : '';
@@ -19,7 +19,7 @@ function calcStats(data){
     try{ return r.Timestamp && new Date(r.Timestamp).toLocaleDateString('id-ID')===todayStr; }catch{return false;}
   }).length;
   const kecs = new Set(data.map(r=>r['Kecamatan Domisili']?.trim()).filter(Boolean));
-  const desas = new Set(data.map(r=>normDesa(r['Desa Domisili']||r['nmdesa']||'')).filter(Boolean));
+  const desas = new Set(data.map(r=>normDesa(getDesaVal(r))).filter(Boolean));
   const allKec = geo ? new Set(geo.features.map(f=>f.properties.nmkec)).size : '?';
   const allDesa = geo ? geo.features.length : 148;
   const dupTotal = rows.filter(r=>r._dn||r._dh).length;
@@ -38,7 +38,7 @@ function calcStats(data){
   set('s-dup', dupTotal);
 
   const cntByNm2 = {};
-  data.forEach(r=>{ const nm=normDesa(r['Desa Domisili']||r['nmdesa']||''); if(nm) cntByNm2[nm]=(cntByNm2[nm]||0)+1; });
+  data.forEach(r=>{ const nm=normDesa(getDesaVal(r)); if(nm) cntByNm2[nm]=(cntByNm2[nm]||0)+1; });
   const ofKec = document.getElementById('of-kec')?.value || '';
   const canonKec0 = resolveKec(ofKec);
   const tgScope = canonKec0 ? targets.filter(t=>t.kec===canonKec0) : targets;
