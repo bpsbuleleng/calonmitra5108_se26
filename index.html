@@ -343,22 +343,6 @@ select.fs:focus{outline:none;border-color:var(--pl)}
 
   <div class="card sec">
     <div class="ch">
-      <div class="ct"><div class="ci">🎯</div>Pemenuhan Target Petugas per Desa</div>
-      <div class="seg" id="tg-seg">
-        <button class="seg-b on" onclick="setTgF('all',this)">Semua</button>
-        <button class="seg-b" onclick="setTgF('met',this)">✅ Memenuhi</button>
-        <button class="seg-b" onclick="setTgF('partial',this)">⚠️ Kurang</button>
-        <button class="seg-b" onclick="setTgF('empty',this)">⛔ Belum Ada</button>
-      </div>
-    </div>
-    <div class="cb">
-      <div id="tg-summary" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center"></div>
-      <div id="tg-list" class="tg-list"></div>
-    </div>
-  </div>
-
-  <div class="card sec">
-    <div class="ch">
       <div class="ct"><div class="ci">📈</div>Tren Pendaftaran Harian</div>
       <div class="seg" id="tr-seg">
         <button class="seg-b on" data-d="14" onclick="setTrend(14,this)">14 Hari</button>
@@ -460,6 +444,19 @@ select.fs:focus{outline:none;border-color:var(--pl)}
 <!-- ===== REKAP ===== -->
 <div id="tsec-rekap" class="tsec">
 
+  <!-- REKAP FILTER -->
+  <div class="card sec ofb">
+    <div class="cb" style="padding:11px 14px">
+      <div class="of-row">
+        <span class="of-lbl">🔎 Filter Rekap:</span>
+        <select class="fs" id="rkec-f" onchange="onRekapFilter('kec')"><option value="">Semua Kecamatan</option></select>
+        <select class="fs" id="rdesa-f" onchange="onRekapFilter('desa')"><option value="">Semua Desa</option></select>
+        <button class="btn btn-o" onclick="resetRekapFilter()" id="rkec-reset" style="display:none">↺ Reset</button>
+        <span class="of-info" id="rkec-info"></span>
+      </div>
+    </div>
+  </div>
+
   <div class="card sec">
     <div class="ch">
       <div class="ct"><div class="ci">🏘️</div>Rekap per Kecamatan</div>
@@ -507,6 +504,22 @@ select.fs:focus{outline:none;border-color:var(--pl)}
     <div class="pg">
       <div class="pgi" id="rekap-pgi"></div>
       <div class="pgb" id="rekap-pgb"></div>
+    </div>
+  </div>
+
+  <div class="card sec">
+    <div class="ch">
+      <div class="ct"><div class="ci">🎯</div>Pemenuhan Target Petugas per Desa</div>
+      <div class="seg" id="tg-seg">
+        <button class="seg-b on" onclick="setTgF('all',this)">Semua</button>
+        <button class="seg-b" onclick="setTgF('met',this)">✅ Memenuhi</button>
+        <button class="seg-b" onclick="setTgF('partial',this)">⚠️ Kurang</button>
+        <button class="seg-b" onclick="setTgF('empty',this)">⛔ Belum Ada</button>
+      </div>
+    </div>
+    <div class="cb">
+      <div id="tg-summary" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center"></div>
+      <div id="tg-list" class="tg-list"></div>
     </div>
   </div>
 </div>
@@ -737,6 +750,7 @@ async function process(){
   await detectDups();
   cleanRows = buildCleanRows();
   buildOFilters();
+  buildRekapFilters();
   applyOFilter();
   renderOverview();
   renderReqs();
@@ -756,7 +770,6 @@ async function process(){
 function renderOverview(){
   calcStats(orows);
   buildCharts(orows);
-  renderTargetList();
 }
 
 function fillMapKecFilter(){
@@ -1086,13 +1099,51 @@ function onOFilter(changed){
   if(changed==='kec') refreshDesaOpts();
   applyOFilter();
   renderOverview();
-  if(document.getElementById('tsec-rekap').classList.contains('on')) renderRekapDesa();
 }
 function resetOFilter(){
   ['of-kec','of-desa','of-edu','of-job'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   refreshDesaOpts();
   applyOFilter();
   renderOverview();
+}
+
+// ── REKAP FILTER ──────────────────────────────────────────────────────────────
+function buildRekapFilters(){
+  const kecs = [...new Set(targets.map(t=>t.kec))].filter(Boolean).sort();
+  const el = document.getElementById('rkec-f');
+  if(!el) return;
+  const cur = el.value;
+  el.innerHTML = '<option value="">Semua Kecamatan</option>' +
+    kecs.map(k=>`<option value="${esc(k)}"${k===cur?' selected':''}>${esc(k)}</option>`).join('');
+  refreshRekapDesaOpts();
+}
+function refreshRekapDesaOpts(){
+  const kec = document.getElementById('rkec-f')?.value || '';
+  const desas = targets.filter(t=>!kec||t.kec===kec).map(t=>t.desa).sort();
+  const el = document.getElementById('rdesa-f');
+  if(!el) return;
+  const cur = el.value;
+  el.innerHTML = '<option value="">Semua Desa</option>' +
+    desas.map(d=>`<option value="${esc(d)}"${d===cur?' selected':''}>${esc(d)}</option>`).join('');
+  if(cur && !desas.includes(cur)) el.value = '';
+}
+function onRekapFilter(changed){
+  if(changed==='kec') refreshRekapDesaOpts();
+  const active = !!(document.getElementById('rkec-f')?.value || document.getElementById('rdesa-f')?.value);
+  document.getElementById('rkec-reset').style.display = active ? 'inline-flex' : 'none';
+  rekapDesaPage = 1;
+  renderRekapKec();
+  renderRekapDesa();
+  renderTargetList();
+}
+function resetRekapFilter(){
+  ['rkec-f','rdesa-f'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  refreshRekapDesaOpts();
+  document.getElementById('rkec-reset').style.display = 'none';
+  rekapDesaPage = 1;
+  renderRekapKec();
+  renderRekapDesa();
+  renderTargetList();
 }
 
 // ── REQUIREMENTS ──────────────────────────────────────────────────────────────
@@ -1135,19 +1186,21 @@ function setTgF(f, btn){
 }
 
 function renderTargetList(){
+  const tgList = document.getElementById('tg-list');
+  const tgSum  = document.getElementById('tg-summary');
+  if(!tgList) return;
   if(!targets.length){
-    document.getElementById('tg-list').innerHTML = `<div class="es"><div class="es-i">📭</div>Data target belum dimuat</div>`;
-    document.getElementById('tg-summary').innerHTML = '';
+    tgList.innerHTML = `<div class="es"><div class="es-i">📭</div>Data target belum dimuat</div>`;
+    if(tgSum) tgSum.innerHTML = '';
     return;
   }
   const cntByNm = {};
-  orows.forEach(r=>{ const nm=(r['Desa Domisili']||'').trim().toUpperCase(); if(nm) cntByNm[nm]=(cntByNm[nm]||0)+1; });
-  const ofKec = document.getElementById('of-kec')?.value || '';
-  const ofDesa= document.getElementById('of-desa')?.value || '';
-  const canonKec = resolveKec(ofKec);
+  getBase().forEach(r=>{ const nm=(r['Desa Domisili']||'').trim().toUpperCase(); if(nm) cntByNm[nm]=(cntByNm[nm]||0)+1; });
+  const rkecF  = document.getElementById('rkec-f')?.value  || '';
+  const rdesaF = document.getElementById('rdesa-f')?.value || '';
   let scope = targets.slice();
-  if(ofDesa)    scope = scope.filter(t=>t.desa.trim().toUpperCase()===ofDesa.trim().toUpperCase());
-  else if(canonKec) scope = scope.filter(t=>t.kec===canonKec);
+  if(rdesaF)      scope = scope.filter(t=>t.desa.trim().toUpperCase()===rdesaF.trim().toUpperCase());
+  else if(rkecF)  scope = scope.filter(t=>t.kec===rkecF);
 
   const items = scope.map(t=>{
     const actual = cntByNm[t.desa.trim().toUpperCase()]||0;
@@ -1162,7 +1215,7 @@ function renderTargetList(){
   const totT=items.reduce((s,i)=>s+i.target,0);
   const totA=items.reduce((s,i)=>s+i.actual,0);
   const totPct = totT>0 ? Math.round(totA/totT*100) : 0;
-  document.getElementById('tg-summary').innerHTML = `
+  if(tgSum) tgSum.innerHTML = `
     <span class="bdg bg">✅ Memenuhi: ${met}</span>
     <span class="bdg by">⚠️ Belum Cukup: ${part}</span>
     <span class="bdg br">⛔ Belum Ada: ${emp}</span>
@@ -1182,7 +1235,7 @@ function renderTargetList(){
   });
 
   const ic = {met:'✅', partial:'⚠️', empty:'⛔'};
-  document.getElementById('tg-list').innerHTML = view.length ? view.map(i=>{
+  tgList.innerHTML = view.length ? view.map(i=>{
     const w = Math.min(100, Math.round(i.pct*100));
     return `<div class="tg-row tg-${i.status}">
       <div class="tg-name">
@@ -1427,36 +1480,36 @@ async function doRefresh(){
 // ── REKAP ─────────────────────────────────────────────────────────────────────
 function buildRekapData(){
   const base = getBase();
-  // per-desa
+  // key by uppercase desa name — form data has no iddesa column
   const desaMap = {};
   base.forEach(r=>{
-    const id = String(r['iddesa']||'');
     const nm = (r['Desa Domisili']||r['nmdesa']||'').trim();
-    const kc = (r['Kecamatan Domisili']||'').trim();
-    if(!id && !nm) return;
-    const key = id || nm;
-    if(!desaMap[key]) desaMap[key] = {iddesa:id, desa:nm, kec:kc, tot:0};
+    if(!nm) return;
+    const key = nm.toUpperCase();
+    if(!desaMap[key]) desaMap[key] = {desa:nm, kec:(r['Kecamatan Domisili']||'').trim(), tot:0};
     desaMap[key].tot++;
   });
-  // merge with target info
+  // merge with target entries (matched by desa name)
+  const seenDesaUC = new Set(Object.keys(desaMap));
   const desaRows = Object.values(desaMap).map(d=>{
-    const tgt = targetByIdDesa[d.iddesa] || 0;
+    const tgtEntry = targets.find(t=>t.desa.trim().toUpperCase()===d.desa.trim().toUpperCase());
+    const tgt = tgtEntry?.target || 0;
+    const kec = tgtEntry?.kec || d.kec;
     const pct = tgt > 0 ? d.tot/tgt : 0;
     const status = tgt===0 ? 'nodata' : d.tot===0 ? 'empty' : d.tot>=tgt ? 'met' : 'partial';
-    return {...d, tgt, pct, status};
+    return {iddesa: tgtEntry?.iddesa||'', desa:d.desa, kec, tot:d.tot, tgt, pct, status};
   });
-  // also include desa from targets with 0 pendaftar
+  // add target desa with 0 pendaftar
   targets.forEach(t=>{
-    if(!desaMap[t.iddesa]){
+    if(!seenDesaUC.has(t.desa.trim().toUpperCase())){
       desaRows.push({iddesa:t.iddesa, desa:t.desa, kec:t.kec, tot:0, tgt:t.target, pct:0, status:t.target>0?'empty':'nodata'});
     }
   });
 
-  // per-kec — always use canonical kec name from targets to avoid duplicate keys
+  // per-kec — kec name is already canonical from targets
   const kecMap = {};
   desaRows.forEach(d=>{
-    const tgtEntry = targets.find(t=>String(t.iddesa)===String(d.iddesa));
-    const kc = (tgtEntry?.kec || d.kec || '–').trim();
+    const kc = (d.kec || '–').trim();
     if(!kecMap[kc]) kecMap[kc] = {kec:kc, tot:0, tgt:0, desa:0, met:0};
     kecMap[kc].tot += d.tot;
     kecMap[kc].tgt += d.tgt;
@@ -1472,9 +1525,11 @@ let _rekapCache = null;
 function getRekap(){ return _rekapCache || (_rekapCache = buildRekapData()); }
 
 function renderRekap(){
-  _rekapCache = null; // invalidate
+  _rekapCache = null;
+  buildRekapFilters();
   renderRekapKec();
   renderRekapDesa();
+  renderTargetList();
 }
 
 const RKEC_COLS = {
@@ -1499,9 +1554,11 @@ function setRSort(key, th){
 
 function renderRekapKec(){
   const {kecRows} = getRekap();
+  const rkecF = document.getElementById('rkec-f')?.value || '';
+  const filtered = rkecF ? kecRows.filter(k=>k.kec===rkecF) : kecRows;
   const get = RKEC_COLS[rekapSort.key]||RKEC_COLS.tot;
   const sgn = rekapSort.dir==='desc'?-1:1;
-  const sorted = [...kecRows].sort((a,b)=>{const va=get(a),vb=get(b);return va<vb?-sgn:va>vb?sgn:0;});
+  const sorted = [...filtered].sort((a,b)=>{const va=get(a),vb=get(b);return va<vb?-sgn:va>vb?sgn:0;});
 
   document.getElementById('rekap-kec-body').innerHTML = sorted.map(k=>{
     const pct = Math.round(k.pct*100);
@@ -1535,14 +1592,15 @@ const RD_PG = 25;
 let rekapDesaRows = [];
 
 function renderRekapDesa(){
-  _rekapCache = null;
   const {desaRows} = getRekap();
-  const q = (document.getElementById('rekap-srch')?.value||'').toLowerCase();
-  const canonKec = resolveKec(document.getElementById('of-kec')?.value||'');
+  const q      = (document.getElementById('rekap-srch')?.value||'').toLowerCase();
+  const rkecF  = document.getElementById('rkec-f')?.value  || '';
+  const rdesaF = document.getElementById('rdesa-f')?.value || '';
   rekapDesaRows = desaRows.filter(d=>{
-    const matchQ = !q || d.desa.toLowerCase().includes(q) || d.kec.toLowerCase().includes(q);
-    const matchK = !canonKec || d.kec===canonKec;
-    return matchQ && matchK;
+    const matchQ = !q      || d.desa.toLowerCase().includes(q) || d.kec.toLowerCase().includes(q);
+    const matchK = !rkecF  || d.kec===rkecF;
+    const matchD = !rdesaF || d.desa.trim().toUpperCase()===rdesaF.trim().toUpperCase();
+    return matchQ && matchK && matchD;
   });
   const get = RDESA_COLS[rekapSort.key];
   if(get){
