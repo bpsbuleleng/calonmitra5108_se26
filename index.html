@@ -39,6 +39,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 .ibt{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:7px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--tr);font-size:14px;flex-shrink:0}
 .ibt:hover{background:rgba(255,255,255,.28)}
 .rbdg{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:7px;padding:3px 8px;font-size:10px;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.dedup-tgl{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:7px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;transition:var(--tr);display:flex;align-items:center;gap:5px;white-space:nowrap}
+.dedup-tgl:hover{background:rgba(255,255,255,.22)}
+.dedup-tgl.on{background:#059669;border-color:#10b981}
+.dedup-tgl.on:hover{background:#047857}
 .rdot{width:5px;height:5px;background:#4ade80;border-radius:50%;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
@@ -246,6 +250,7 @@ select.fs:focus{outline:none;border-color:var(--pl)}
   .cb{padding:12px}
   .hdr-ttl h1{font-size:12px}
   .rbdg{display:none}
+  .dedup-tgl span:last-child{display:none}
 }
 @media(max-width:420px){
   .sg{grid-template-columns:repeat(2,1fr)}
@@ -277,6 +282,9 @@ select.fs:focus{outline:none;border-color:var(--pl)}
     </div>
     <div class="hdr-act">
       <div class="rbdg"><div class="rdot"></div><span id="rcd">Live</span></div>
+      <button class="dedup-tgl" id="dedup-btn" onclick="toggleDedup()" title="Tampilkan semua data atau data bersih tanpa duplikat">
+        <span id="dedup-icon">📋</span><span id="dedup-label">Semua Data</span>
+      </button>
       <button class="ibt" id="thbtn" onclick="toggleDark()" title="Ganti tema">🌙</button>
       <button class="ibt" onclick="doRefresh()" title="Refresh">🔄</button>
     </div>
@@ -289,6 +297,7 @@ select.fs:focus{outline:none;border-color:var(--pl)}
   <div class="tab" data-tab="map" onclick="goTab('map')">🗺️ Peta Sebaran</div>
   <div class="tab" data-tab="reqs" onclick="goTab('reqs')">✅ Persyaratan</div>
   <div class="tab" data-tab="dups" onclick="goTab('dups')">🔍 Duplikat<span id="dupbdg" class="bdg br" style="display:none;margin-left:4px"></span></div>
+  <div class="tab" data-tab="rekap" onclick="goTab('rekap')">📋 Rekap</div>
   <div class="tab" data-tab="list" onclick="goTab('list')">👥 Peserta</div>
 </div>
 
@@ -448,6 +457,61 @@ select.fs:focus{outline:none;border-color:var(--pl)}
   </div>
 </div>
 
+<!-- ===== REKAP ===== -->
+<div id="tsec-rekap" class="tsec">
+
+  <div class="card sec">
+    <div class="ch">
+      <div class="ct"><div class="ci">🏘️</div>Rekap per Kecamatan</div>
+      <button class="btn btn-o" onclick="exportRekapKec()">⬇️ Export</button>
+    </div>
+    <div class="tw">
+      <table id="rekap-kec-tbl">
+        <thead><tr>
+          <th data-sort="rkec" onclick="setRSort('kec',this)">Kecamatan</th>
+          <th data-sort="rtot" onclick="setRSort('tot',this)">Total Pendaftar</th>
+          <th data-sort="rtgt" onclick="setRSort('tgt',this)">Target Petugas</th>
+          <th data-sort="rpct" onclick="setRSort('pct',this)">% Terpenuhi</th>
+          <th data-sort="rdes" onclick="setRSort('des',this)">Desa Terwakili</th>
+          <th data-sort="rmet" onclick="setRSort('met',this)">Desa Memenuhi</th>
+          <th>Progress</th>
+        </tr></thead>
+        <tbody id="rekap-kec-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card sec">
+    <div class="ch">
+      <div class="ct"><div class="ci">🏡</div>Rekap per Desa/Kelurahan</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="sw" style="min-width:160px;max-width:220px"><input class="si2" id="rekap-srch" placeholder="Cari desa / kecamatan..." oninput="renderRekapDesa()"></div>
+        <select class="fs" id="rekap-kec-f" onchange="renderRekapDesa()"><option value="">Semua Kecamatan</option></select>
+        <button class="btn btn-o" onclick="exportRekapDesa()">⬇️ Export</button>
+      </div>
+    </div>
+    <div class="tw">
+      <table id="rekap-desa-tbl">
+        <thead><tr>
+          <th>#</th>
+          <th data-sort="rdesa" onclick="setRSort('desa',this)">Desa/Kelurahan</th>
+          <th data-sort="rkec2" onclick="setRSort('kec2',this)">Kecamatan</th>
+          <th data-sort="rtot2" onclick="setRSort('tot2',this)">Pendaftar</th>
+          <th data-sort="rtgt2" onclick="setRSort('tgt2',this)">Target</th>
+          <th data-sort="rpct2" onclick="setRSort('pct2',this)">% Terpenuhi</th>
+          <th>Status</th>
+          <th>Progress</th>
+        </tr></thead>
+        <tbody id="rekap-desa-body"></tbody>
+      </table>
+    </div>
+    <div class="pg">
+      <div class="pgi" id="rekap-pgi"></div>
+      <div class="pgb" id="rekap-pgb"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== LIST ===== -->
 <div id="tsec-list" class="tsec">
   <div class="card sec">
@@ -518,6 +582,58 @@ let targets = [];
 let targetByIdDesa = {};
 let mapMode = 'count';
 let tgF = 'all';
+let dedup = false;
+let cleanRows = [];
+let rekapSort = {key:'tot', dir:'desc'};
+let rekapDesaPage = 1;
+
+function getBase(){ return dedup ? cleanRows : rows; }
+
+function earliestIdx(indices){
+  return indices.reduce((a,b)=>{
+    try{ return new Date(rows[a].Timestamp).getTime() <= new Date(rows[b].Timestamp).getTime() ? a : b; }
+    catch{ return a; }
+  });
+}
+
+function buildCleanRows(){
+  const kept = new Set();
+  const nikSeen = new Set(), hpSeen = new Set();
+  const sorted = rows.map((r,i)=>({r,i})).sort((a,b)=>{
+    try{ return new Date(a.r.Timestamp).getTime() - new Date(b.r.Timestamp).getTime(); }catch{ return 0; }
+  });
+  for(const {r,i} of sorted){
+    const nh=r._nh, ph=r._ph;
+    const alreadySeen = (nh && nikSeen.has(nh)) || (ph && hpSeen.has(ph));
+    if(!alreadySeen) kept.add(i);
+    if(nh) nikSeen.add(nh);
+    if(ph) hpSeen.add(ph);
+  }
+  return rows.filter((_,i)=>kept.has(i));
+}
+
+function toggleDedup(){
+  dedup = !dedup;
+  const btn = document.getElementById('dedup-btn');
+  btn.classList.toggle('on', dedup);
+  set('dedup-icon', dedup ? '✅' : '📋');
+  set('dedup-label', dedup ? 'Data Bersih' : 'Semua Data');
+  applyOFilter();
+  renderOverview();
+  const base = getBase();
+  const q=document.getElementById('srch').value.toLowerCase();
+  const kec=document.getElementById('fkec').value;
+  const edu=document.getElementById('fedu').value;
+  frows = base.filter(r=>{
+    const nm=(r['Nama Lengkap']||'').toLowerCase();
+    const ds=(r['Desa Domisili']||r['nmdesa']||'').toLowerCase();
+    return(!q||nm.includes(q)||ds.includes(q))&&(!kec||r['Kecamatan Domisili']?.trim()===kec)&&(!edu||r['Ijazah Terakhir']?.trim()===edu);
+  });
+  sortRows(); curPage=1; renderList();
+  buildFilters(); buildOFilters();
+  if(mapPainted && gjLayer && geo) paintMap();
+  if(document.getElementById('tsec-rekap').classList.contains('on')) renderRekap();
+}
 
 // ── THEME ─────────────────────────────────────────────────────────────────────
 function toggleDark(){
@@ -551,6 +667,7 @@ function goTab(t){
       if(lmap){ lmap.invalidateSize(); if(gjLayer) lmap.fitBounds(gjLayer.getBounds(),{padding:[20,20]}); }
     },150);
   }
+  if(t==='rekap') renderRekap();
 }
 
 // ── TOAST ─────────────────────────────────────────────────────────────────────
@@ -602,15 +719,17 @@ async function fetchData(){
 }
 
 async function process(){
+  await detectDups();
+  cleanRows = buildCleanRows();
   buildOFilters();
   applyOFilter();
-  await detectDups();
   renderOverview();
   renderReqs();
   renderDupTable();
-  sortRows();
-  renderList();
+  frows = [...getBase()];
+  sortRows(); renderList();
   buildFilters();
+  renderRekap();
   mapPainted = false;
   fillMapKecFilter();
   if(document.getElementById('tsec-map').classList.contains('on')){
@@ -634,7 +753,7 @@ function fillMapKecFilter(){
 
 // ── STATS ─────────────────────────────────────────────────────────────────────
 function calcStats(data){
-  data = data || rows;
+  data = data || getBase();
   const tot = data.length;
   const totAll = rows.length;
   const todayStr = new Date().toLocaleDateString('id-ID');
@@ -645,17 +764,20 @@ function calcStats(data){
   const desas = new Set(data.map(r=>r['iddesa']).filter(Boolean));
   const allKec = geo ? new Set(geo.features.map(f=>f.properties.nmkec)).size : '?';
   const allDesa = geo ? geo.features.length : 148;
-  const dupN = data.filter(r=>r._dn||r._dh).length;
+  const dupTotal = rows.filter(r=>r._dn||r._dh).length;
 
   set('s-tot', tot.toLocaleString('id-ID'));
-  set('s-tots', tot===totAll ? `${tot} orang telah mendaftar` : `dari ${totAll.toLocaleString('id-ID')} total`);
+  const baseLen = getBase().length;
+  set('s-tots', dedup
+    ? `${baseLen} unik (${totAll-baseLen} dikecualikan)`
+    : (tot===totAll ? `${tot} orang telah mendaftar` : `dari ${totAll.toLocaleString('id-ID')} total`));
   set('s-tdy', tdy.toLocaleString('id-ID'));
   set('s-tdys', tdy>0?`↑ pendaftar baru hari ini`:`Belum ada pendaftar hari ini`);
   set('s-kec', kecs.size);
   set('s-kecs', `dari ${allKec} kecamatan`);
   set('s-des', desas.size);
   set('s-dess', `dari ${allDesa} desa/kel`);
-  set('s-dup', dupN);
+  set('s-dup', dupTotal);
 
   // target met
   const cntById = {};
@@ -698,7 +820,7 @@ function getColor(n, mx, target){
 }
 
 function paintMap(){
-  const cnt = {}; rows.forEach(r=>{ const id=r['iddesa']; if(id) cnt[id]=(cnt[id]||0)+1; });
+  const cnt = {}; getBase().forEach(r=>{ const id=r['iddesa']; if(id) cnt[id]=(cnt[id]||0)+1; });
   const mx = Math.max(...Object.values(cnt), 1);
 
   if(gjLayer){ gjLayer.remove(); gjLayer=null; }
@@ -707,14 +829,14 @@ function paintMap(){
     style: f=>{
       const id=f.properties.iddesa;
       const n=cnt[id]||0;
-      const tgt=targetByIdDesa[id]||0;
+      const tgt=targetByIdDesa[String(id)]||0;
       const fop = mapMode==='target'
         ? (tgt ? 0.92 : 0.35)
         : (n ? 0.92 : 0.45);
       return { fillColor:getColor(n,mx,tgt), weight:0.3, opacity:1, color:'#ffffff', fillOpacity: fop };
     },
     onEachFeature:(f,layer)=>{
-      const p=f.properties, n=cnt[p.iddesa]||0, tgt=targetByIdDesa[p.iddesa]||0;
+      const p=f.properties, n=cnt[p.iddesa]||0, tgt=targetByIdDesa[String(p.iddesa)]||0;
       const pct = tgt>0 ? Math.round(n/tgt*100) : 0;
       let statusHtml = '';
       if(tgt>0){
@@ -902,7 +1024,7 @@ function buildCharts(data){
 
 // ── OVERVIEW FILTER ───────────────────────────────────────────────────────────
 function uniq(field, base){
-  return [...new Set((base||rows).map(r=>r[field]?.toString().trim()).filter(Boolean))].sort();
+  return [...new Set((base||getBase()).map(r=>r[field]?.toString().trim()).filter(Boolean))].sort();
 }
 function buildOFilters(){
   const fill=(id, opts, label)=>{
@@ -917,7 +1039,8 @@ function buildOFilters(){
 }
 function refreshDesaOpts(){
   const kec=document.getElementById('of-kec').value;
-  const base = kec ? rows.filter(r=>r['Kecamatan Domisili']?.trim()===kec) : rows;
+  const b = getBase();
+  const base = kec ? b.filter(r=>r['Kecamatan Domisili']?.trim()===kec) : b;
   const opts=uniq('Desa Domisili', base);
   const el=document.getElementById('of-desa'); if(!el)return;
   const cur=el.value;
@@ -926,11 +1049,12 @@ function refreshDesaOpts(){
   if(!stillValid) el.value='';
 }
 function applyOFilter(){
+  const base = getBase();
   const kec=document.getElementById('of-kec').value;
   const desa=document.getElementById('of-desa').value;
   const edu=document.getElementById('of-edu').value;
   const job=document.getElementById('of-job').value;
-  orows = rows.filter(r=>
+  orows = base.filter(r=>
        (!kec ||r['Kecamatan Domisili']?.trim()===kec)
     && (!desa||r['Desa Domisili']?.trim()===desa)
     && (!edu ||r['Ijazah Terakhir']?.trim()===edu)
@@ -939,7 +1063,7 @@ function applyOFilter(){
   const active = !!(kec||desa||edu||job);
   document.getElementById('of-reset').style.display = active?'inline-flex':'none';
   document.getElementById('of-info').textContent = active
-    ? `Menampilkan ${orows.length.toLocaleString('id-ID')} dari ${rows.length.toLocaleString('id-ID')} pendaftar`
+    ? `Menampilkan ${orows.length.toLocaleString('id-ID')} dari ${base.length.toLocaleString('id-ID')} pendaftar`
     : '';
 }
 function onOFilter(changed){
@@ -1135,8 +1259,9 @@ function renderDupTable(){
 
 // ── LIST TABLE ────────────────────────────────────────────────────────────────
 function buildFilters(){
-  const kecs=[...new Set(rows.map(r=>r['Kecamatan Domisili']?.trim()).filter(Boolean))].sort();
-  const edus=[...new Set(rows.map(r=>r['Ijazah Terakhir']?.trim()).filter(Boolean))].sort();
+  const base = getBase();
+  const kecs=[...new Set(base.map(r=>r['Kecamatan Domisili']?.trim()).filter(Boolean))].sort();
+  const edus=[...new Set(base.map(r=>r['Ijazah Terakhir']?.trim()).filter(Boolean))].sort();
   const fkec=document.getElementById('fkec');
   fkec.innerHTML='<option value="">Semua Kecamatan</option>'+kecs.map(k=>`<option value="${k}">${k}</option>`).join('');
   const fedu=document.getElementById('fedu');
@@ -1147,7 +1272,7 @@ function doFilter(){
   const q=document.getElementById('srch').value.toLowerCase();
   const kec=document.getElementById('fkec').value;
   const edu=document.getElementById('fedu').value;
-  frows=rows.filter(r=>{
+  frows=getBase().filter(r=>{
     const nm=(r['Nama Lengkap']||'').toLowerCase();
     const ds=(r['Desa Domisili']||r['nmdesa']||'').toLowerCase();
     return(!q||nm.includes(q)||ds.includes(q))
@@ -1241,19 +1366,17 @@ function goPage(p){
 
 // ── EXPORT ────────────────────────────────────────────────────────────────────
 function exportCSV(){
+  const base = getBase();
   const hdr=['No','Nama Lengkap','Usia','Kecamatan','Desa/Kel','Pendidikan','Pekerjaan','Surat Rekomendasi','Sobat Mitra','Waktu Daftar'];
-  const body=rows.map((r,i)=>[
+  const body=base.map((r,i)=>[
     i+1, r['Nama Lengkap']||'', r['Umur']||'', r['Kecamatan Domisili']||'',
     r['Desa Domisili']||r['nmdesa']||'', r['Ijazah Terakhir']||'', r['Pekerjaan']||'',
     hasRekom(r)?'Ya':'Tidak',
     hasSobat(r)?'Ya':'Tidak',
     r['Timestamp']||''
   ]);
-  const csv=[hdr,...body].map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'}));
-  a.download=`rekrutmen_mitra_se2026_${new Date().toISOString().split('T')[0]}.csv`;
-  a.click();
+  const suffix = dedup ? '_bersih' : '';
+  dlCSV([hdr,...body], `rekrutmen_mitra_se2026${suffix}_${new Date().toISOString().split('T')[0]}.csv`);
   toast('File CSV berhasil diunduh','success');
 }
 
@@ -1279,6 +1402,205 @@ async function doRefresh(){
     toast('Data berhasil diperbarui','success');
   }catch(e){ toast('Gagal memperbarui data','error'); }
   finally{ hide('lov'); schedRefresh(); }
+}
+
+// ── REKAP ─────────────────────────────────────────────────────────────────────
+function buildRekapData(){
+  const base = getBase();
+  // per-desa
+  const desaMap = {};
+  base.forEach(r=>{
+    const id = String(r['iddesa']||'');
+    const nm = (r['Desa Domisili']||r['nmdesa']||'').trim();
+    const kc = (r['Kecamatan Domisili']||'').trim();
+    if(!id && !nm) return;
+    const key = id || nm;
+    if(!desaMap[key]) desaMap[key] = {iddesa:id, desa:nm, kec:kc, tot:0};
+    desaMap[key].tot++;
+  });
+  // merge with target info
+  const desaRows = Object.values(desaMap).map(d=>{
+    const tgt = targetByIdDesa[d.iddesa] || 0;
+    const pct = tgt > 0 ? d.tot/tgt : 0;
+    const status = tgt===0 ? 'nodata' : d.tot===0 ? 'empty' : d.tot>=tgt ? 'met' : 'partial';
+    return {...d, tgt, pct, status};
+  });
+  // also include desa from targets with 0 pendaftar
+  targets.forEach(t=>{
+    if(!desaMap[t.iddesa]){
+      desaRows.push({iddesa:t.iddesa, desa:t.desa, kec:t.kec, tot:0, tgt:t.target, pct:0, status:t.target>0?'empty':'nodata'});
+    }
+  });
+
+  // per-kec
+  const kecMap = {};
+  desaRows.forEach(d=>{
+    const kc = d.kec || (targets.find(t=>t.iddesa===d.iddesa)?.kec) || '–';
+    if(!kecMap[kc]) kecMap[kc] = {kec:kc, tot:0, tgt:0, desa:0, met:0};
+    kecMap[kc].tot += d.tot;
+    kecMap[kc].tgt += d.tgt;
+    kecMap[kc].desa++;
+    if(d.status==='met') kecMap[kc].met++;
+  });
+  const kecRows = Object.values(kecMap).map(k=>({...k, pct: k.tgt>0 ? k.tot/k.tgt : 0}));
+
+  return {desaRows, kecRows};
+}
+
+let _rekapCache = null;
+function getRekap(){ return _rekapCache || (_rekapCache = buildRekapData()); }
+
+function renderRekap(){
+  _rekapCache = null; // invalidate
+  renderRekapKec();
+  renderRekapDesa();
+  // populate kec filter
+  const kecs = [...new Set(targets.map(t=>t.kec))].sort();
+  const el = document.getElementById('rekap-kec-f'); if(!el)return;
+  const cur = el.value;
+  el.innerHTML = '<option value="">Semua Kecamatan</option>' +
+    kecs.map(k=>`<option value="${esc(k)}"${k===cur?' selected':''}>${esc(k)}</option>`).join('');
+}
+
+const RKEC_COLS = {
+  kec:  r=>r.kec.toLowerCase(),
+  tot:  r=>r.tot,
+  tgt:  r=>r.tgt,
+  pct:  r=>r.pct,
+  des:  r=>r.desa,
+  met:  r=>r.met
+};
+
+function setRSort(key, th){
+  if(rekapSort.key===key) rekapSort.dir = rekapSort.dir==='asc'?'desc':'asc';
+  else rekapSort = {key, dir: key==='kec'||key==='kec2'||key==='desa' ? 'asc' : 'desc'};
+  document.querySelectorAll('#rekap-kec-tbl th[data-sort], #rekap-desa-tbl th[data-sort]').forEach(t=>{
+    t.classList.remove('sa','sd');
+  });
+  if(th){ th.classList.add(rekapSort.dir==='asc'?'sa':'sd'); }
+  renderRekapKec();
+  renderRekapDesa();
+}
+
+function renderRekapKec(){
+  const {kecRows} = getRekap();
+  const get = RKEC_COLS[rekapSort.key]||RKEC_COLS.tot;
+  const sgn = rekapSort.dir==='desc'?-1:1;
+  const sorted = [...kecRows].sort((a,b)=>{const va=get(a),vb=get(b);return va<vb?-sgn:va>vb?sgn:0;});
+
+  document.getElementById('rekap-kec-body').innerHTML = sorted.map(k=>{
+    const pct = Math.round(k.pct*100);
+    const w = Math.min(100,pct);
+    const col = k.pct>=1?'#059669':k.pct>=.5?'#d97706':'#dc2626';
+    const badgeCls = k.pct>=1?'bg':k.pct>=.5?'by':'br';
+    return `<tr>
+      <td style="font-weight:700">${esc(k.kec)}</td>
+      <td style="font-variant-numeric:tabular-nums;font-weight:600">${k.tot.toLocaleString('id-ID')}</td>
+      <td style="font-variant-numeric:tabular-nums">${k.tgt.toLocaleString('id-ID')}</td>
+      <td><span class="bdg ${badgeCls}">${pct}%</span></td>
+      <td>${k.desa}</td>
+      <td><span class="bdg ${k.met===k.desa?'bg':'bw'}">${k.met} / ${k.desa}</span></td>
+      <td style="min-width:100px;width:120px">
+        <div style="height:6px;background:var(--brd);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${w}%;background:${col};border-radius:3px;transition:width .8s"></div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted)">Belum ada data</td></tr>`;
+}
+
+const RDESA_COLS = {
+  desa: r=>r.desa.toLowerCase(),
+  kec2: r=>r.kec.toLowerCase(),
+  tot2: r=>r.tot,
+  tgt2: r=>r.tgt,
+  pct2: r=>r.pct,
+};
+const RD_PG = 25;
+let rekapDesaRows = [];
+
+function renderRekapDesa(){
+  _rekapCache = null;
+  const {desaRows} = getRekap();
+  const q = (document.getElementById('rekap-srch')?.value||'').toLowerCase();
+  const kf = document.getElementById('rekap-kec-f')?.value||'';
+  rekapDesaRows = desaRows.filter(d=>{
+    const matchQ = !q || d.desa.toLowerCase().includes(q) || d.kec.toLowerCase().includes(q);
+    const matchK = !kf || d.kec.toUpperCase()===kf.toUpperCase();
+    return matchQ && matchK;
+  });
+  const get = RDESA_COLS[rekapSort.key];
+  if(get){
+    const sgn = rekapSort.dir==='desc'?-1:1;
+    rekapDesaRows.sort((a,b)=>{const va=get(a),vb=get(b);return va<vb?-sgn:va>vb?sgn:0;});
+  } else {
+    rekapDesaRows.sort((a,b)=>a.kec.localeCompare(b.kec)||a.desa.localeCompare(b.desa));
+  }
+  const tp = Math.ceil(rekapDesaRows.length/RD_PG);
+  rekapDesaPage = Math.min(rekapDesaPage, Math.max(1,tp));
+  const st = (rekapDesaPage-1)*RD_PG;
+  const pg = rekapDesaRows.slice(st, st+RD_PG);
+
+  const statusIco = {met:'✅',partial:'⚠️',empty:'⛔',nodata:'–'};
+  const badgeCls  = {met:'bg',partial:'by',empty:'br',nodata:'bw'};
+  document.getElementById('rekap-desa-body').innerHTML = pg.map((d,i)=>{
+    const pct = Math.round(d.pct*100);
+    const w = Math.min(100,pct);
+    const col = d.pct>=1?'#059669':d.pct>=.5?'#d97706':'#dc2626';
+    return `<tr>
+      <td>${st+i+1}</td>
+      <td style="font-weight:600">${esc(d.desa||'–')}</td>
+      <td style="white-space:nowrap">${esc(d.kec||'–')}</td>
+      <td style="font-weight:700;font-variant-numeric:tabular-nums">${d.tot}</td>
+      <td style="font-variant-numeric:tabular-nums">${d.tgt||'–'}</td>
+      <td>${d.tgt>0?`<span class="bdg ${badgeCls[d.status]}">${pct}%</span>`:'–'}</td>
+      <td>${statusIco[d.status]}</td>
+      <td style="min-width:80px;width:100px">
+        ${d.tgt>0?`<div style="height:6px;background:var(--brd);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${w}%;background:${col};border-radius:3px;transition:width .8s"></div>
+        </div>`:'–'}
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted)">Tidak ada data</td></tr>`;
+
+  const en = Math.min(st+RD_PG, rekapDesaRows.length);
+  document.getElementById('rekap-pgi').textContent = rekapDesaRows.length>0
+    ? `Menampilkan ${st+1}–${en} dari ${rekapDesaRows.length} desa` : '';
+  let h = `<button class="pb2" onclick="goRDPage(${rekapDesaPage-1})" ${rekapDesaPage<=1?'disabled':''}>‹</button>`;
+  for(let p=Math.max(1,rekapDesaPage-2);p<=Math.min(tp,rekapDesaPage+2);p++)
+    h+=`<button class="pb2${p===rekapDesaPage?' on':''}" onclick="goRDPage(${p})">${p}</button>`;
+  h+=`<button class="pb2" onclick="goRDPage(${rekapDesaPage+1})" ${rekapDesaPage>=tp?'disabled':''}>›</button>`;
+  document.getElementById('rekap-pgb').innerHTML=h;
+}
+
+function goRDPage(p){
+  const tp=Math.ceil(rekapDesaRows.length/RD_PG);
+  if(p<1||p>tp)return;
+  rekapDesaPage=p; renderRekapDesa();
+}
+
+function exportRekapKec(){
+  const {kecRows} = buildRekapData();
+  const hdr = ['Kecamatan','Total Pendaftar','Target Petugas','% Terpenuhi','Jumlah Desa','Desa Memenuhi Target'];
+  const body = kecRows.map(k=>[k.kec, k.tot, k.tgt, Math.round(k.pct*100)+'%', k.desa, k.met]);
+  dlCSV([hdr,...body], `rekap_kecamatan_se2026_${new Date().toISOString().split('T')[0]}.csv`);
+  toast('Export rekap kecamatan berhasil','success');
+}
+
+function exportRekapDesa(){
+  const {desaRows} = buildRekapData();
+  const hdr = ['Kecamatan','Desa/Kelurahan','Total Pendaftar','Target Petugas','% Terpenuhi','Status'];
+  const statusLabel = {met:'Memenuhi',partial:'Belum Cukup',empty:'Belum Ada Pendaftar',nodata:'–'};
+  const body = desaRows.map(d=>[d.kec, d.desa, d.tot, d.tgt||'', d.tgt>0?Math.round(d.pct*100)+'%':'–', statusLabel[d.status]]);
+  dlCSV([hdr,...body], `rekap_desa_se2026_${new Date().toISOString().split('T')[0]}.csv`);
+  toast('Export rekap desa berhasil','success');
+}
+
+function dlCSV(rows2d, filename){
+  const csv = rows2d.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'}));
+  a.download = filename; a.click();
 }
 
 // ── UTIL ──────────────────────────────────────────────────────────────────────
