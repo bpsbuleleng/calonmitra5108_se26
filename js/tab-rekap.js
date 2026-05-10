@@ -1,14 +1,31 @@
 function buildRekapData(){
-  // Count form submissions per normalized desa name.
-  // Using normDesa() handles prefixes like "Kel.", "Desa ", casing differences, etc.
   const cntByNm = {};
   getBase().forEach(r=>{
     const nm = normDesa(r['Desa Domisili']||r['nmdesa']||'');
     if(nm) cntByNm[nm] = (cntByNm[nm]||0) + 1;
   });
 
-  // Build desaRows strictly from targets — guarantees exactly 148 rows.
-  // Each target desa gets the pendaftar count looked up by normalized name.
+  // one-shot diagnostic — buka browser console (F12) untuk melihat hasilnya
+  if(!window.__rkDbg){
+    window.__rkDbg = true;
+    const base = getBase();
+    console.log('[Rekap DEBUG] Jumlah baris getBase():', base.length);
+    if(base.length > 0){
+      console.log('[Rekap DEBUG] Field names row[0]:', Object.keys(base[0]));
+      const sample = base.slice(0,5).map(r=>({
+        raw_desa: r['Desa Domisili'],
+        norm_desa: normDesa(r['Desa Domisili']||''),
+        kec: r['Kecamatan Domisili']
+      }));
+      console.log('[Rekap DEBUG] 5 baris pertama:', sample);
+    }
+    console.log('[Rekap DEBUG] cntByNm keys (10 pertama):', Object.keys(cntByNm).slice(0,10));
+    const tNorm = targets.slice(0,5).map(t=>({
+      desa: t.desa, norm: normDesa(t.desa), hitCount: cntByNm[normDesa(t.desa)]||0
+    }));
+    console.log('[Rekap DEBUG] 5 targets lookup pertama:', tNorm);
+  }
+
   const desaRows = targets.map(t=>{
     const tot = cntByNm[normDesa(t.desa)] || 0;
     const pct = t.target > 0 ? tot/t.target : 0;
