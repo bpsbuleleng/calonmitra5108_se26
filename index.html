@@ -296,8 +296,8 @@ select.fs:focus{outline:none;border-color:var(--pl)}
   <div class="tab on" data-tab="overview" onclick="goTab('overview')">📊 Ringkasan</div>
   <div class="tab" data-tab="map" onclick="goTab('map')">🗺️ Peta Sebaran</div>
   <div class="tab" data-tab="reqs" onclick="goTab('reqs')">✅ Persyaratan</div>
-  <div class="tab" data-tab="dups" onclick="goTab('dups')">🔍 Duplikat<span id="dupbdg" class="bdg br" style="display:none;margin-left:4px"></span></div>
   <div class="tab" data-tab="rekap" onclick="goTab('rekap')">📋 Rekap</div>
+  <div class="tab" data-tab="dups" onclick="goTab('dups')">🔍 Duplikat<span id="dupbdg" class="bdg br" style="display:none;margin-left:4px"></span></div>
   <div class="tab" data-tab="list" onclick="goTab('list')">👥 Peserta</div>
 </div>
 
@@ -620,6 +620,7 @@ function toggleDedup(){
   set('dedup-label', dedup ? 'Data Bersih' : 'Semua Data');
   applyOFilter();
   renderOverview();
+  renderReqs();
   const base = getBase();
   const q=document.getElementById('srch').value.toLowerCase();
   const kec=document.getElementById('fkec').value;
@@ -1080,7 +1081,8 @@ function resetOFilter(){
 
 // ── REQUIREMENTS ──────────────────────────────────────────────────────────────
 function renderReqs(){
-  const tot=rows.length||1;
+  const base = getBase();
+  const tot=base.length||1;
   const reqs=[
     {icon:'🏍️',label:'Bisa Kendarai Motor',
      chk:r=>/(ya|bisa|iya)/i.test(r['Menguasai dan mampu mengendarai kendaraan bermotor']||''),col:'#3b82f6'},
@@ -1096,7 +1098,7 @@ function renderReqs(){
      chk:r=>!!(r['KTP']||'').trim(),col:'#ef4444'}
   ];
   document.getElementById('rg').innerHTML = reqs.map(req=>{
-    const n=rows.filter(req.chk).length;
+    const n=base.filter(req.chk).length;
     const p=Math.round(n/tot*100);
     return `<div class="rc">
       <div class="ri">${req.icon}</div>
@@ -1432,10 +1434,11 @@ function buildRekapData(){
     }
   });
 
-  // per-kec
+  // per-kec — always use canonical kec name from targets to avoid duplicate keys
   const kecMap = {};
   desaRows.forEach(d=>{
-    const kc = d.kec || (targets.find(t=>t.iddesa===d.iddesa)?.kec) || '–';
+    const tgtEntry = targets.find(t=>String(t.iddesa)===String(d.iddesa));
+    const kc = (tgtEntry?.kec || d.kec || '–').trim();
     if(!kecMap[kc]) kecMap[kc] = {kec:kc, tot:0, tgt:0, desa:0, met:0};
     kecMap[kc].tot += d.tot;
     kecMap[kc].tgt += d.tgt;
