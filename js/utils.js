@@ -7,6 +7,7 @@ function set(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
 function normDesa(s){
   if(!s) return '';
   return String(s).trim()
+    .replace(/^\[\d+\]\s*/,'')
     .replace(/^(desa|kel\.?|kelurahan|dusun|dsn\.?)\s+/i,'')
     .replace(/\s+/g,' ')
     .toUpperCase();

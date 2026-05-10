@@ -1,6 +1,3 @@
-// Dynamically resolve the desa field name from a row object.
-// Tries exact canonical name first, then scans for any field containing "desa"
-// (but not "kecamatan") so the dashboard works regardless of exact question wording.
 let _desaFieldCache = null;
 function resolveDesaField(r){
   if(_desaFieldCache) return _desaFieldCache;
@@ -9,7 +6,6 @@ function resolveDesaField(r){
     (keys.find(k => k === 'Desa Domisili')) ||
     (keys.find(k => /desa/i.test(k) && !/kecamatan/i.test(k))) ||
     'Desa Domisili';
-  console.log('[Rekap] Field desa terdeteksi:', _desaFieldCache);
   return _desaFieldCache;
 }
 function getDesaVal(r){ return r[resolveDesaField(r)] || r['nmdesa'] || ''; }
@@ -22,19 +18,6 @@ function buildRekapData(){
     const nm = normDesa(getDesaVal(r));
     if(nm) cntByNm[nm] = (cntByNm[nm]||0) + 1;
   });
-
-  // Populate persistent debug info — rendered by showRekapDbg() if counts stay at 0
-  const totalCnt = Object.values(cntByNm).reduce((a,b)=>a+b,0);
-  window._rkDbgInfo = {
-    baseLen: base.length,
-    totalCnt,
-    fieldDetected: base.length ? resolveDesaField(base[0]) : '(no rows)',
-    sampleRaw:  base.slice(0,3).map(r=>r[resolveDesaField(r)]||''),
-    sampleNorm: base.slice(0,3).map(r=>normDesa(getDesaVal(r))),
-    cntKeys:    Object.keys(cntByNm).slice(0,8),
-    tgtSample:  targets.slice(0,5).map(t=>normDesa(t.desa)+' → '+( cntByNm[normDesa(t.desa)]||0 ))
-  };
-  console.log('[Rekap dbg]', window._rkDbgInfo);
 
   const desaRows = targets.map(t=>{
     const tot = cntByNm[normDesa(t.desa)] || 0;
@@ -88,28 +71,6 @@ function setRSort(key, th){
   renderRekapDesa();
 }
 
-function showRekapDbg(kecRows){
-  const allZero = kecRows.length > 0 && kecRows.every(k=>k.tot===0);
-  let el = document.getElementById('rkdbg');
-  if(!el){
-    el = document.createElement('div');
-    el.id = 'rkdbg';
-    el.style.cssText = 'background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:12px 16px;margin:10px 0;font-size:12px;font-family:monospace;line-height:1.6;display:none';
-    const card = document.querySelector('#tsec-rekap .card.sec');
-    if(card) card.prepend(el);
-  }
-  if(!allZero){ el.style.display='none'; return; }
-  const d = window._rkDbgInfo || {};
-  el.style.display = 'block';
-  el.innerHTML = `<b style="font-size:13px">⚠️ Debug: semua pendaftar = 0</b><br>
-    Baris data (getBase): <b>${d.baseLen??'?'}</b> &nbsp;|&nbsp; Nilai desa terekstrak: <b>${d.totalCnt??'?'}</b><br>
-    Kolom desa terdeteksi: <b>${esc(d.fieldDetected??'?')}</b><br>
-    Nilai mentah [0–2]: <b>${(d.sampleRaw||[]).map(v=>esc(v||'(kosong)')).join(' | ')}</b><br>
-    Setelah normDesa:   <b>${(d.sampleNorm||[]).map(v=>esc(v||'(kosong)')).join(' | ')}</b><br>
-    Kunci cntByNm:      <b>${(d.cntKeys||[]).map(esc).join(' | ')||'(kosong)'}</b><br>
-    Target sample (norm → hit): <b>${(d.tgtSample||[]).map(esc).join(' | ')}</b>`;
-}
-
 function renderRekapKec(){
   const {kecRows} = getRekap();
   const rkecF = document.getElementById('rkec-f')?.value || '';
@@ -137,7 +98,6 @@ function renderRekapKec(){
       </td>
     </tr>`;
   }).join('') || `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted)">Belum ada data</td></tr>`;
-  showRekapDbg(sorted);
 }
 
 const RDESA_COLS = {
