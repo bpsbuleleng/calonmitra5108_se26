@@ -5,7 +5,7 @@ const GEO_URL    = 'peta/final_desa_5108_2025-1.geojson';
 const PAGE_SZ    = 20;
 const REFRESH_MS = 5 * 60 * 1000;
 // Nama kolom verifikasi Sobat Mitra di spreadsheet (berisi email jika terdaftar, atau "error"/"#N/A" jika belum)
-const SOBAT_MITRA_FIELD = 'Status Registrasi Sobat Mitra';
+const SOBAT_MITRA_FIELD = 'Terdaftar Sobat (by Sistem)';
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let rows = [], frows = [], geo = null;
