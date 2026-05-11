@@ -58,13 +58,14 @@ function renderRekap(){
 }
 
 const RKEC_COLS = {
-  kec:   r=>r.kec.toLowerCase(),
-  tot:   r=>r.tot,
-  sobat: r=>r.sobat,
-  tgt:   r=>r.tgt,
-  pct:   r=>r.pct,
-  des:   r=>r.desa,
-  met:   r=>r.met
+  kec:      r=>r.kec.toLowerCase(),
+  tot:      r=>r.tot,
+  sobat:    r=>r.sobat,
+  sobatpct: r=>r.tgt>0 ? r.sobat/r.tgt : 0,
+  tgt:      r=>r.tgt,
+  pct:      r=>r.pct,
+  des:      r=>r.desa,
+  met:      r=>r.met
 };
 
 function setRSort(key, th){
@@ -105,12 +106,14 @@ function renderRekapKec(){
 }
 
 const RDESA_COLS = {
-  desa: r=>r.desa.toLowerCase(),
-  kec2: r=>r.kec.toLowerCase(),
-  tot2: r=>r.tot,
-  sob2: r=>r.sobat,
-  tgt2: r=>r.tgt,
-  pct2: r=>r.pct,
+  desa:      r=>r.desa.toLowerCase(),
+  kec2:      r=>r.kec.toLowerCase(),
+  tot2:      r=>r.tot,
+  sob2:      r=>r.sobat,
+  sobatpct2: r=>r.tgt>0 ? r.sobat/r.tgt : 0,
+  tgt2:      r=>r.tgt,
+  pct2:      r=>r.pct,
+  stat2:     r=>({met:3,partial:2,empty:1,nodata:0})[r.status]||0,
 };
 const RD_PG = 25;
 let rekapDesaRows = [];

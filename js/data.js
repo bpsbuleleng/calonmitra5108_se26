@@ -1,24 +1,33 @@
-function earliestIdx(indices){
-  return indices.reduce((a,b)=>{
-    try{ return new Date(rows[a].Timestamp).getTime() <= new Date(rows[b].Timestamp).getTime() ? a : b; }
-    catch{ return a; }
-  });
-}
-
 function buildCleanRows(){
-  const kept = new Set();
-  const nikSeen = new Set(), hpSeen = new Set();
-  const sorted = rows.map((r,i)=>({r,i})).sort((a,b)=>{
-    try{ return new Date(a.r.Timestamp).getTime() - new Date(b.r.Timestamp).getTime(); }catch{ return 0; }
+  // Group rows by NIK hash and HP hash
+  const nikMap = {}, hpMap = {};
+  rows.forEach((r,i)=>{
+    if(r._nh){ nikMap[r._nh]=nikMap[r._nh]||[]; nikMap[r._nh].push(i); }
+    if(r._ph){ hpMap[r._ph]=hpMap[r._ph]||[]; hpMap[r._ph].push(i); }
   });
-  for(const {r,i} of sorted){
-    const nh=r._nh, ph=r._ph;
-    const alreadySeen = (nh && nikSeen.has(nh)) || (ph && hpSeen.has(ph));
-    if(!alreadySeen) kept.add(i);
-    if(nh) nikSeen.add(nh);
-    if(ph) hpSeen.add(ph);
+
+  // Within a dup group, prefer Sobat Mitra registered; break ties by earliest timestamp.
+  function bestOf(indices){
+    const getTs = i => { try{ return new Date(rows[i].Timestamp).getTime(); }catch{ return Infinity; } };
+    return indices.reduce((best, i) => {
+      const bSobat = isSobatRegistered(rows[best]) ? 1 : 0;
+      const iSobat = isSobatRegistered(rows[i])    ? 1 : 0;
+      if(iSobat > bSobat) return i;
+      if(iSobat === bSobat && getTs(i) < getTs(best)) return i;
+      return best;
+    });
   }
-  return rows.filter((_,i)=>kept.has(i));
+
+  const dupIdx  = new Set();
+  const winners = new Set();
+  [nikMap, hpMap].forEach(map=>{
+    Object.entries(map).filter(([,v])=>v.length>1).forEach(([,idx])=>{
+      idx.forEach(i=>dupIdx.add(i));
+      winners.add(bestOf(idx));
+    });
+  });
+
+  return rows.filter((_,i)=>!dupIdx.has(i)||winners.has(i));
 }
 
 function toggleDedup(){
