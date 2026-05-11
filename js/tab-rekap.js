@@ -92,6 +92,7 @@ function renderRekapKec(){
     const col = k.pct>=1?'#059669':k.pct>=.5?'#d97706':'#dc2626';
     const badgeCls = k.pct>=1?'bg':k.pct>=.5?'by':'br';
     const sobatPct = k.tot>0 ? Math.round(k.sobat/k.tot*100) : 0;
+    const sobatBar = k.tgt>0 ? Math.min(100, Math.round(k.sobat/k.tgt*100)) : 0;
     return `<tr>
       <td style="font-weight:700">${esc(k.kec)}</td>
       <td style="font-variant-numeric:tabular-nums;font-weight:600">${k.tot.toLocaleString('id-ID')}</td>
@@ -100,9 +101,14 @@ function renderRekapKec(){
       <td><span class="bdg ${badgeCls}">${pct}%</span></td>
       <td>${k.desa}</td>
       <td><span class="bdg ${k.met===k.desa?'bg':'bw'}">${k.met} / ${k.desa}</span></td>
-      <td style="min-width:100px;width:120px">
-        <div style="height:6px;background:var(--brd);border-radius:3px;overflow:hidden">
+      <td style="min-width:130px;width:150px">
+        <div style="font-size:9px;color:var(--muted);margin-bottom:1px">📋 Form</div>
+        <div style="height:5px;background:var(--brd);border-radius:3px;overflow:hidden;margin-bottom:5px">
           <div style="height:100%;width:${w}%;background:${col};border-radius:3px;transition:width .8s"></div>
+        </div>
+        <div style="font-size:9px;color:#0891b2;margin-bottom:1px">🤝 Sobat</div>
+        <div style="height:5px;background:var(--brd);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${sobatBar}%;background:#06b6d4;border-radius:3px;transition:width .8s"></div>
         </div>
       </td>
     </tr>`;
@@ -150,6 +156,7 @@ function renderRekapDesa(){
     const w = Math.min(100,pct);
     const col = d.pct>=1?'#059669':d.pct>=.5?'#d97706':'#dc2626';
     const sobatPct = d.tot>0 ? Math.round(d.sobat/d.tot*100) : 0;
+    const sobatBar = d.tgt>0 ? Math.min(100, Math.round(d.sobat/d.tgt*100)) : 0;
     return `<tr>
       <td>${st+i+1}</td>
       <td style="font-weight:600">${esc(d.desa||'–')}</td>
@@ -159,9 +166,14 @@ function renderRekapDesa(){
       <td style="font-variant-numeric:tabular-nums">${d.tgt||'–'}</td>
       <td>${d.tgt>0?`<span class="bdg ${badgeCls[d.status]}">${pct}%</span>`:'–'}</td>
       <td>${statusIco[d.status]}</td>
-      <td style="min-width:80px;width:100px">
-        ${d.tgt>0?`<div style="height:6px;background:var(--brd);border-radius:3px;overflow:hidden">
+      <td style="min-width:130px;width:150px">
+        ${d.tgt>0?`<div style="font-size:9px;color:var(--muted);margin-bottom:1px">📋 Form</div>
+        <div style="height:5px;background:var(--brd);border-radius:3px;overflow:hidden;margin-bottom:5px">
           <div style="height:100%;width:${w}%;background:${col};border-radius:3px;transition:width .8s"></div>
+        </div>
+        <div style="font-size:9px;color:#0891b2;margin-bottom:1px">🤝 Sobat</div>
+        <div style="height:5px;background:var(--brd);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${sobatBar}%;background:#06b6d4;border-radius:3px;transition:width .8s"></div>
         </div>`:'–'}
       </td>
     </tr>`;
@@ -264,8 +276,8 @@ function renderTargetList(){
     if(tgSum) tgSum.innerHTML = '';
     return;
   }
-  const cntByNm = {};
-  getBase().forEach(r=>{ const nm=normDesa(getDesaVal(r)); if(nm) cntByNm[nm]=(cntByNm[nm]||0)+1; });
+  const cntByNm = {}, sobatByNm = {};
+  getBase().forEach(r=>{ const nm=normDesa(getDesaVal(r)); if(nm){ cntByNm[nm]=(cntByNm[nm]||0)+1; if(isSobatRegistered(r)) sobatByNm[nm]=(sobatByNm[nm]||0)+1; } });
   const rkecF  = document.getElementById('rkec-f')?.value  || '';
   const rdesaF = document.getElementById('rdesa-f')?.value || '';
   let scope = targets.slice();
@@ -274,9 +286,11 @@ function renderTargetList(){
 
   const items = scope.map(t=>{
     const actual = cntByNm[normDesa(t.desa)]||0;
+    const sobat  = sobatByNm[normDesa(t.desa)]||0;
     const pct = t.target>0 ? actual/t.target : 0;
+    const sobatPct = t.target>0 ? sobat/t.target : 0;
     const status = (t.target>0 && actual>=t.target) ? 'met' : (actual===0 ? 'empty' : 'partial');
-    return {...t, actual, pct, status};
+    return {...t, actual, sobat, pct, sobatPct, status};
   });
 
   const met=items.filter(i=>i.status==='met').length;
@@ -306,13 +320,17 @@ function renderTargetList(){
 
   const ic = {met:'✅', partial:'⚠️', empty:'⛔'};
   tgList.innerHTML = view.length ? view.map(i=>{
-    const w = Math.min(100, Math.round(i.pct*100));
+    const w  = Math.min(100, Math.round(i.pct*100));
+    const sw = Math.min(100, Math.round(i.sobatPct*100));
     return `<div class="tg-row tg-${i.status}">
       <div class="tg-name">
         <span class="tg-desa">${ic[i.status]} ${esc(i.desa)}</span>
         <span class="tg-kec">Kec. ${esc(i.kec)}</span>
       </div>
-      <div class="tg-bar"><div class="tg-fill" style="width:${w}%"></div></div>
+      <div class="tg-bars">
+        <div class="tg-bar"><div class="tg-fill" style="width:${w}%"></div></div>
+        <div class="tg-bar tg-bar-sobat"><div class="tg-fill-sobat" style="width:${sw}%"></div></div>
+      </div>
       <div class="tg-num">${i.actual} / ${i.target}</div>
       <div class="tg-pct">${Math.round(i.pct*100)}%</div>
     </div>`;

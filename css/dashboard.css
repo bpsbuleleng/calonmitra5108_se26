@@ -225,6 +225,17 @@ select.fs:focus{outline:none;border-color:var(--pl)}
 .stage-conn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:2px 0}
 .stage-arr{font-size:18px;color:var(--light);line-height:1}
 .stage-conv-txt{font-size:11px;font-weight:600;color:var(--muted);background:var(--bg);border:1px solid var(--brd);border-radius:20px;padding:3px 12px}
+.stage-div-label{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.stage-div-label::after{content:'';flex:1;height:2px;background:var(--brd);border-radius:1px}
+.stage-div-form .stage-num{background:#3b82f6}
+.stage-div-form::after{background:linear-gradient(to right,#3b82f6,var(--brd))}
+.stage-div-sobat{color:#0891b2}
+.stage-div-sobat .stage-num{background:#06b6d4}
+.stage-div-sobat::after{background:linear-gradient(to right,#06b6d4,var(--brd))}
+.tg-bars{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.tg-bar-sobat{background:rgba(8,145,178,.12)}
+.tg-fill-sobat{height:100%;border-radius:4px;background:#06b6d4;transition:width .8s ease}
+@media(max-width:540px){.tg-bars{display:none}}
 
 /* MAP CONTROLS */
 .map-controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}

@@ -103,6 +103,12 @@
     </div>
   </div>
 
+  <!-- Tahap 1 chart divider -->
+  <div class="stage-div-label stage-div-form sec">
+    <span class="stage-num">1</span>
+    <span>Pendaftaran via Google Form</span>
+  </div>
+
   <div class="g2 sec">
     <div class="card">
       <div class="ch"><div class="ct"><div class="ci">🏆</div><span id="kecC-ttl">Sebaran per Kecamatan</span></div></div>
@@ -133,6 +139,27 @@
     <div class="card">
       <div class="ch"><div class="ct"><div class="ci">👤</div>Distribusi Usia</div></div>
       <div class="cb"><div class="cw"><canvas id="ageC"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- Tahap 2 chart divider -->
+  <div class="stage-conn sec">
+    <div class="stage-arr">↓</div>
+    <div class="stage-conv-txt">Visualisasi Sobat Mitra</div>
+  </div>
+  <div class="stage-div-label stage-div-sobat sec">
+    <span class="stage-num stage-num-sobat">2</span>
+    <span>Registrasi Sobat Mitra</span>
+  </div>
+
+  <div class="g2 sec">
+    <div class="card">
+      <div class="ch"><div class="ct"><div class="ci">🤝</div>Status Registrasi Sobat Mitra</div></div>
+      <div class="cb"><div class="cw"><canvas id="sobatDistC"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct"><div class="ci">🏘️</div>% Sobat Mitra per Kecamatan</div></div>
+      <div class="cb"><div class="cw-lg"><canvas id="sobatKecC"></canvas></div></div>
     </div>
   </div>
 </div>
@@ -168,12 +195,10 @@
         <span class="ml-step ml-step-g">✅ ≥100%</span>
       </div>
       <div class="ml-row" id="ml-sobat" style="display:none">
-        <span class="ml-ttl">Sobat Mitra Terdaftar</span>
-        <span class="ml-step ml-step-r">⛔ 0%</span>
-        <span class="ml-step ml-step-o">1–24%</span>
-        <span class="ml-step ml-step-y">25–49%</span>
-        <span class="ml-step ml-step-l">50–74%</span>
-        <span class="ml-step ml-step-g">✅ ≥75%</span>
+        <span class="ml-ttl">Jumlah Sobat Mitra</span>
+        <span class="ml-min">0</span>
+        <span class="ml-grad"></span>
+        <span class="ml-max" id="ml-sobat-max">–</span>
       </div>
       <div class="ml-hint">Arahkan kursor ke desa untuk detail • Scroll untuk zoom</div>
     </div>
@@ -254,7 +279,7 @@
           <th data-sort="rpct" onclick="setRSort('pct',this)">% Terpenuhi</th>
           <th data-sort="rdes" onclick="setRSort('des',this)">Desa Terwakili</th>
           <th data-sort="rmet" onclick="setRSort('met',this)">Desa Memenuhi</th>
-          <th>Progress</th>
+          <th><span style="color:#3b82f6">●</span> Form &nbsp;<span style="color:#06b6d4">●</span> Sobat</th>
         </tr></thead>
         <tbody id="rekap-kec-body"></tbody>
       </table>
@@ -280,7 +305,7 @@
           <th data-sort="rtgt2" onclick="setRSort('tgt2',this)">Target</th>
           <th data-sort="rpct2" onclick="setRSort('pct2',this)">% Terpenuhi</th>
           <th>Status</th>
-          <th>Progress</th>
+          <th><span style="color:#3b82f6">●</span> Form &nbsp;<span style="color:#06b6d4">●</span> Sobat</th>
         </tr></thead>
         <tbody id="rekap-desa-body"></tbody>
       </table>

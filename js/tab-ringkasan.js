@@ -174,6 +174,21 @@ function buildCharts(data){
     rows.filter(r=>r['Surat Pernyataan Kesiapan']?.trim()).length
   ];
   mkBar('docC', docLbls, docCnt);
+
+  const sobatDistYa = data.filter(isSobatRegistered).length;
+  mkDonut('sobatDistC', [['Sudah Terdaftar', sobatDistYa], ['Belum Terdaftar', data.length - sobatDistYa]]);
+  const kecSobatMap = {};
+  data.forEach(r=>{
+    const kec = r['Kecamatan Domisili']?.trim();
+    if(!kec) return;
+    if(!kecSobatMap[kec]) kecSobatMap[kec] = {tot:0, sobat:0};
+    kecSobatMap[kec].tot++;
+    if(isSobatRegistered(r)) kecSobatMap[kec].sobat++;
+  });
+  const kecSobatEntries = Object.entries(kecSobatMap)
+    .map(([k,v])=>[k, Math.round(v.sobat/Math.max(v.tot,1)*100)])
+    .sort((a,b)=>b[1]-a[1]);
+  mkBar('sobatKecC', kecSobatEntries.map(e=>e[0]), kecSobatEntries.map(e=>e[1]), true);
 }
 
 // ── OVERVIEW FILTER ───────────────────────────────────────────────────────────

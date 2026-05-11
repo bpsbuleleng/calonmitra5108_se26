@@ -7,15 +7,16 @@ function initMap(){
   L.control.attribution({prefix:'© OpenStreetMap © CartoDB'}).addTo(lmap);
 }
 
-function getColor(n, mx, target, sobat){
+function getColor(n, mx, target, sobat, mxSobat){
   if(mapMode==='sobat'){
-    if(!n) return '#f1f5f9';
-    const p = sobat/n;
-    if(p>=.75) return '#059669';
-    if(p>=.50) return '#84cc16';
-    if(p>=.25) return '#facc15';
-    if(p> 0)   return '#f97316';
-    return '#ef4444';
+    if(!sobat) return '#f1f5f9';
+    const t = sobat/mxSobat;
+    if(t>.80) return '#1e3a8a';
+    if(t>.60) return '#2563eb';
+    if(t>.40) return '#3b82f6';
+    if(t>.25) return '#60a5fa';
+    if(t>.10) return '#93c5fd';
+    return '#dbeafe';
   }
   if(mapMode==='target'){
     if(!target) return '#e5e7eb';
@@ -52,6 +53,7 @@ function paintMap(){
     }
   });
   const mx = Math.max(...Object.values(cnt), 1);
+  const mxSobat = Math.max(...Object.values(sobatCnt), 1);
 
   if(gjLayer){ gjLayer.remove(); gjLayer=null; }
 
@@ -62,8 +64,10 @@ function paintMap(){
       const tgt=targetByIdDesa[String(id)]||0;
       const fop = mapMode==='target'
         ? (tgt ? 0.92 : 0.35)
-        : (n ? 0.92 : 0.45);
-      return { fillColor:getColor(n,mx,tgt,s), weight:0.3, opacity:1, color:'#ffffff', fillOpacity: fop };
+        : mapMode==='sobat'
+          ? (s ? 0.92 : 0.35)
+          : (n ? 0.92 : 0.45);
+      return { fillColor:getColor(n,mx,tgt,s,mxSobat), weight:0.3, opacity:1, color:'#ffffff', fillOpacity: fop };
     },
     onEachFeature:(f,layer)=>{
       const p=f.properties, n=cnt[p.iddesa]||0, s=sobatCnt[p.iddesa]||0, tgt=targetByIdDesa[String(p.iddesa)]||0;
@@ -97,6 +101,7 @@ function paintMap(){
 
   lmap.fitBounds(gjLayer.getBounds(),{padding:[16,16]});
   set('ml-min','0'); set('ml-max', String(mx));
+  set('ml-sobat-max', String(mxSobat));
   document.getElementById('ml-count').style.display  = mapMode==='count'  ? 'flex' : 'none';
   document.getElementById('ml-target').style.display = mapMode==='target' ? 'flex' : 'none';
   document.getElementById('ml-sobat').style.display  = mapMode==='sobat'  ? 'flex' : 'none';
