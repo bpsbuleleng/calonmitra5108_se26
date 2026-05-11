@@ -25,7 +25,8 @@ let mapMode = 'count';
 let tgF = 'all';
 let dedup = false;
 let cleanRows = [];
-let rekapSort = {key:'tot', dir:'desc'};
+let rekapKecSort  = {key:'idkec',  dir:'asc'};
+let rekapDesaSort = {key:'iddesa', dir:'asc'};
 let rekapDesaPage = 1;
 
 function getBase(){ return dedup ? cleanRows : rows; }

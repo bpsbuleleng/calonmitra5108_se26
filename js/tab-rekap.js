@@ -28,13 +28,13 @@ function buildRekapData(){
     const sobat = sobatByNm[key] || 0;
     const pct = t.target > 0 ? tot/t.target : 0;
     const status = t.target===0 ? 'nodata' : tot===0 ? 'empty' : tot>=t.target ? 'met' : 'partial';
-    return {iddesa:t.iddesa, desa:t.desa, kec:t.kec, tot, sobat, tgt:t.target, pct, status};
+    return {iddesa:t.iddesa, idkec:t.idkec, desa:t.desa, kec:t.kec, tot, sobat, tgt:t.target, pct, status};
   });
 
   // Aggregate to kecamatan — kec values are all canonical from targets, so always 9 rows.
   const kecMap = {};
   desaRows.forEach(d=>{
-    if(!kecMap[d.kec]) kecMap[d.kec] = {kec:d.kec, tot:0, tgt:0, desa:0, met:0, sobat:0};
+    if(!kecMap[d.kec]) kecMap[d.kec] = {kec:d.kec, idkec:d.idkec||'', tot:0, tgt:0, desa:0, met:0, sobat:0};
     kecMap[d.kec].tot   += d.tot;
     kecMap[d.kec].tgt   += d.tgt;
     kecMap[d.kec].sobat += d.sobat;
@@ -58,6 +58,7 @@ function renderRekap(){
 }
 
 const RKEC_COLS = {
+  idkec:    r=>r.idkec,
   kec:      r=>r.kec.toLowerCase(),
   tot:      r=>r.tot,
   sobat:    r=>r.sobat,
@@ -68,13 +69,15 @@ const RKEC_COLS = {
   met:      r=>r.met
 };
 
+const ASC_DEFAULT_KEYS = new Set(['kec','kec2','desa','idkec','iddesa']);
 function setRSort(key, th){
-  if(rekapSort.key===key) rekapSort.dir = rekapSort.dir==='asc'?'desc':'asc';
-  else rekapSort = {key, dir: key==='kec'||key==='kec2'||key==='desa' ? 'asc' : 'desc'};
+  const sort = (key in RKEC_COLS) ? rekapKecSort : rekapDesaSort;
+  if(sort.key===key) sort.dir = sort.dir==='asc'?'desc':'asc';
+  else { sort.key=key; sort.dir=ASC_DEFAULT_KEYS.has(key)?'asc':'desc'; }
   document.querySelectorAll('#rekap-kec-tbl th[data-sort], #rekap-desa-tbl th[data-sort]').forEach(t=>{
     t.classList.remove('sa','sd');
   });
-  if(th){ th.classList.add(rekapSort.dir==='asc'?'sa':'sd'); }
+  if(th){ th.classList.add(sort.dir==='asc'?'sa':'sd'); }
   renderRekapKec();
   renderRekapDesa();
 }
@@ -83,8 +86,8 @@ function renderRekapKec(){
   const {kecRows} = getRekap();
   const rkecF = document.getElementById('rkec-f')?.value || '';
   const filtered = rkecF ? kecRows.filter(k=>k.kec===rkecF) : kecRows;
-  const get = RKEC_COLS[rekapSort.key]||RKEC_COLS.tot;
-  const sgn = rekapSort.dir==='desc'?-1:1;
+  const get = RKEC_COLS[rekapKecSort.key]||RKEC_COLS.idkec;
+  const sgn = rekapKecSort.dir==='desc'?-1:1;
   const sorted = [...filtered].sort((a,b)=>{const va=get(a),vb=get(b);return va<vb?-sgn:va>vb?sgn:0;});
 
   document.getElementById('rekap-kec-body').innerHTML = sorted.map(k=>{
@@ -106,6 +109,7 @@ function renderRekapKec(){
 }
 
 const RDESA_COLS = {
+  iddesa:    r=>r.iddesa,
   desa:      r=>r.desa.toLowerCase(),
   kec2:      r=>r.kec.toLowerCase(),
   tot2:      r=>r.tot,
@@ -129,13 +133,9 @@ function renderRekapDesa(){
     const matchD = !rdesaF || d.desa.trim().toUpperCase()===rdesaF.trim().toUpperCase();
     return matchQ && matchK && matchD;
   });
-  const get = RDESA_COLS[rekapSort.key];
-  if(get){
-    const sgn = rekapSort.dir==='desc'?-1:1;
-    rekapDesaRows.sort((a,b)=>{const va=get(a),vb=get(b);return va<vb?-sgn:va>vb?sgn:0;});
-  } else {
-    rekapDesaRows.sort((a,b)=>a.kec.localeCompare(b.kec)||a.desa.localeCompare(b.desa));
-  }
+  const get = RDESA_COLS[rekapDesaSort.key]||RDESA_COLS.iddesa;
+  const sgn = rekapDesaSort.dir==='desc'?-1:1;
+  rekapDesaRows.sort((a,b)=>{const va=get(a),vb=get(b);return va<vb?-sgn:va>vb?sgn:0;});
   const tp = Math.ceil(rekapDesaRows.length/RD_PG);
   rekapDesaPage = Math.min(rekapDesaPage, Math.max(1,tp));
   const st = (rekapDesaPage-1)*RD_PG;
