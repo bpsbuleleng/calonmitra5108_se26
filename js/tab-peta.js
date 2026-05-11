@@ -7,16 +7,15 @@ function initMap(){
   L.control.attribution({prefix:'© OpenStreetMap © CartoDB'}).addTo(lmap);
 }
 
-function getColor(n, mx, target, sobat, mxSobat){
+function getColor(n, mx, target, sobat){
   if(mapMode==='sobat'){
-    if(!sobat) return '#f1f5f9';
-    const t = sobat/mxSobat;
-    if(t>.80) return '#1e3a8a';
-    if(t>.60) return '#2563eb';
-    if(t>.40) return '#3b82f6';
-    if(t>.25) return '#60a5fa';
-    if(t>.10) return '#93c5fd';
-    return '#dbeafe';
+    if(!target) return '#e5e7eb';
+    if(sobat>=target) return '#059669';
+    const r = sobat/target;
+    if(r>=.75) return '#84cc16';
+    if(r>=.50) return '#facc15';
+    if(r>=.25) return '#f97316';
+    return '#ef4444';
   }
   if(mapMode==='target'){
     if(!target) return '#e5e7eb';
@@ -53,7 +52,6 @@ function paintMap(){
     }
   });
   const mx = Math.max(...Object.values(cnt), 1);
-  const mxSobat = Math.max(...Object.values(sobatCnt), 1);
 
   if(gjLayer){ gjLayer.remove(); gjLayer=null; }
 
@@ -62,12 +60,10 @@ function paintMap(){
       const id=f.properties.iddesa;
       const n=cnt[id]||0, s=sobatCnt[id]||0;
       const tgt=targetByIdDesa[String(id)]||0;
-      const fop = mapMode==='target'
+      const fop = (mapMode==='target'||mapMode==='sobat')
         ? (tgt ? 0.92 : 0.35)
-        : mapMode==='sobat'
-          ? (s ? 0.92 : 0.35)
-          : (n ? 0.92 : 0.45);
-      return { fillColor:getColor(n,mx,tgt,s,mxSobat), weight:0.3, opacity:1, color:'#ffffff', fillOpacity: fop };
+        : (n ? 0.92 : 0.45);
+      return { fillColor:getColor(n,mx,tgt,s), weight:0.3, opacity:1, color:'#ffffff', fillOpacity: fop };
     },
     onEachFeature:(f,layer)=>{
       const p=f.properties, n=cnt[p.iddesa]||0, s=sobatCnt[p.iddesa]||0, tgt=targetByIdDesa[String(p.iddesa)]||0;
@@ -101,7 +97,6 @@ function paintMap(){
 
   lmap.fitBounds(gjLayer.getBounds(),{padding:[16,16]});
   set('ml-min','0'); set('ml-max', String(mx));
-  set('ml-sobat-max', String(mxSobat));
   document.getElementById('ml-count').style.display  = mapMode==='count'  ? 'flex' : 'none';
   document.getElementById('ml-target').style.display = mapMode==='target' ? 'flex' : 'none';
   document.getElementById('ml-sobat').style.display  = mapMode==='sobat'  ? 'flex' : 'none';

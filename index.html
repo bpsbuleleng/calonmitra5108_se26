@@ -83,6 +83,37 @@
       <div class="sc" style="--ac:#059669"><div class="si">🎯</div><div class="sv" id="s-tgt">–</div><div class="sl">Desa Memenuhi Target</div><div class="ss" id="s-tgts">–</div></div>
       <div class="sc" style="--ac:#ef4444"><div class="si">⚠️</div><div class="sv" id="s-dup">–</div><div class="sl">Terindikasi Duplikat</div><div class="ss">NIK / No. HP</div></div>
     </div>
+    <div class="stage-inner-div"></div>
+    <div class="g2 stage-sec">
+      <div class="card">
+        <div class="ch"><div class="ct"><div class="ci">🏆</div><span id="kecC-ttl">Sebaran per Kecamatan</span></div></div>
+        <div class="cb"><div class="cw-lg"><canvas id="kecC"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ct"><div class="ci">💼</div>Distribusi Pekerjaan</div></div>
+        <div class="cb"><div class="cw-lg"><canvas id="jobC"></canvas></div></div>
+      </div>
+    </div>
+    <div class="card stage-sec">
+      <div class="ch">
+        <div class="ct"><div class="ci">📈</div>Tren Pendaftaran Harian</div>
+        <div class="seg" id="tr-seg">
+          <button class="seg-b on" data-d="14" onclick="setTrend(14,this)">14 Hari</button>
+          <button class="seg-b" data-d="30" onclick="setTrend(30,this)">30 Hari</button>
+        </div>
+      </div>
+      <div class="cb"><div class="cw"><canvas id="trendC"></canvas></div></div>
+    </div>
+    <div class="g2 stage-sec">
+      <div class="card">
+        <div class="ch"><div class="ct"><div class="ci">🎓</div>Distribusi Pendidikan</div></div>
+        <div class="cb"><div class="cw"><canvas id="eduC"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ct"><div class="ci">👤</div>Distribusi Usia</div></div>
+        <div class="cb"><div class="cw"><canvas id="ageC"></canvas></div></div>
+      </div>
+    </div>
   </div>
 
   <!-- Connector -->
@@ -101,65 +132,16 @@
       <div class="sc" style="--ac:#06b6d4"><div class="si">🤝</div><div class="sv" id="s-sobat">–</div><div class="sl">Sudah Terdaftar</div><div class="ss" id="s-sobats">–</div></div>
       <div class="sc" style="--ac:#94a3b8"><div class="si">⏳</div><div class="sv" id="s-sobat-no">–</div><div class="sl">Belum Terdaftar</div><div class="ss" id="s-sobat-nos">–</div></div>
     </div>
-  </div>
-
-  <!-- Tahap 1 chart divider -->
-  <div class="stage-div-label stage-div-form sec">
-    <span class="stage-num">1</span>
-    <span>Pendaftaran via Google Form</span>
-  </div>
-
-  <div class="g2 sec">
-    <div class="card">
-      <div class="ch"><div class="ct"><div class="ci">🏆</div><span id="kecC-ttl">Sebaran per Kecamatan</span></div></div>
-      <div class="cb"><div class="cw-lg"><canvas id="kecC"></canvas></div></div>
-    </div>
-    <div class="card">
-      <div class="ch"><div class="ct"><div class="ci">💼</div>Distribusi Pekerjaan</div></div>
-      <div class="cb"><div class="cw-lg"><canvas id="jobC"></canvas></div></div>
-    </div>
-  </div>
-
-  <div class="card sec">
-    <div class="ch">
-      <div class="ct"><div class="ci">📈</div>Tren Pendaftaran Harian</div>
-      <div class="seg" id="tr-seg">
-        <button class="seg-b on" data-d="14" onclick="setTrend(14,this)">14 Hari</button>
-        <button class="seg-b" data-d="30" onclick="setTrend(30,this)">30 Hari</button>
+    <div class="stage-inner-div"></div>
+    <div class="g2 stage-sec">
+      <div class="card">
+        <div class="ch"><div class="ct"><div class="ci">🤝</div>Status Registrasi Sobat Mitra</div></div>
+        <div class="cb"><div class="cw"><canvas id="sobatDistC"></canvas></div></div>
       </div>
-    </div>
-    <div class="cb"><div class="cw"><canvas id="trendC"></canvas></div></div>
-  </div>
-
-  <div class="g2 sec">
-    <div class="card">
-      <div class="ch"><div class="ct"><div class="ci">🎓</div>Distribusi Pendidikan</div></div>
-      <div class="cb"><div class="cw"><canvas id="eduC"></canvas></div></div>
-    </div>
-    <div class="card">
-      <div class="ch"><div class="ct"><div class="ci">👤</div>Distribusi Usia</div></div>
-      <div class="cb"><div class="cw"><canvas id="ageC"></canvas></div></div>
-    </div>
-  </div>
-
-  <!-- Tahap 2 chart divider -->
-  <div class="stage-conn sec">
-    <div class="stage-arr">↓</div>
-    <div class="stage-conv-txt">Visualisasi Sobat Mitra</div>
-  </div>
-  <div class="stage-div-label stage-div-sobat sec">
-    <span class="stage-num stage-num-sobat">2</span>
-    <span>Registrasi Sobat Mitra</span>
-  </div>
-
-  <div class="g2 sec">
-    <div class="card">
-      <div class="ch"><div class="ct"><div class="ci">🤝</div>Status Registrasi Sobat Mitra</div></div>
-      <div class="cb"><div class="cw"><canvas id="sobatDistC"></canvas></div></div>
-    </div>
-    <div class="card">
-      <div class="ch"><div class="ct"><div class="ci">🏘️</div>% Sobat Mitra per Kecamatan</div></div>
-      <div class="cb"><div class="cw-lg"><canvas id="sobatKecC"></canvas></div></div>
+      <div class="card">
+        <div class="ch"><div class="ct"><div class="ci">🏘️</div>% Sobat Mitra per Kecamatan</div></div>
+        <div class="cb"><div class="cw-lg"><canvas id="sobatKecC"></canvas></div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -195,10 +177,12 @@
         <span class="ml-step ml-step-g">✅ ≥100%</span>
       </div>
       <div class="ml-row" id="ml-sobat" style="display:none">
-        <span class="ml-ttl">Jumlah Sobat Mitra</span>
-        <span class="ml-min">0</span>
-        <span class="ml-grad"></span>
-        <span class="ml-max" id="ml-sobat-max">–</span>
+        <span class="ml-ttl">Capaian Target Sobat</span>
+        <span class="ml-step ml-step-r">⛔ &lt;25%</span>
+        <span class="ml-step ml-step-o">25–49%</span>
+        <span class="ml-step ml-step-y">50–74%</span>
+        <span class="ml-step ml-step-l">75–99%</span>
+        <span class="ml-step ml-step-g">✅ ≥100%</span>
       </div>
       <div class="ml-hint">Arahkan kursor ke desa untuk detail • Scroll untuk zoom</div>
     </div>
@@ -271,16 +255,22 @@
     </div>
     <div class="tw">
       <table id="rekap-kec-tbl">
-        <thead><tr>
-          <th data-sort="rkec" onclick="setRSort('kec',this)">Kecamatan</th>
-          <th data-sort="rtot" onclick="setRSort('tot',this)">Total Pendaftar</th>
-          <th data-sort="rsobat" onclick="setRSort('sobat',this)">🤝 Sobat Mitra</th>
-          <th data-sort="rtgt" onclick="setRSort('tgt',this)">Target Petugas</th>
-          <th data-sort="rpct" onclick="setRSort('pct',this)">% Terpenuhi</th>
-          <th data-sort="rdes" onclick="setRSort('des',this)">Desa Terwakili</th>
-          <th data-sort="rmet" onclick="setRSort('met',this)">Desa Memenuhi</th>
-          <th><span style="color:#3b82f6">●</span> Form &nbsp;<span style="color:#06b6d4">●</span> Sobat</th>
-        </tr></thead>
+        <thead>
+          <tr>
+            <th rowspan="2" data-sort="rkec" onclick="setRSort('kec',this)" style="vertical-align:bottom">Kecamatan</th>
+            <th colspan="5" class="th-form">📋 Tahap 1 — Pendaftaran Google Form</th>
+            <th colspan="2" class="th-sobat">🤝 Tahap 2 — Sobat Mitra</th>
+          </tr>
+          <tr>
+            <th data-sort="rtot" onclick="setRSort('tot',this)">Total</th>
+            <th data-sort="rtgt" onclick="setRSort('tgt',this)">Target</th>
+            <th data-sort="rpct" onclick="setRSort('pct',this)">% Capaian</th>
+            <th data-sort="rdes" onclick="setRSort('des',this)">Desa</th>
+            <th data-sort="rmet" onclick="setRSort('met',this)">Memenuhi</th>
+            <th data-sort="rsobat" onclick="setRSort('sobat',this)" class="td-sep">Jumlah</th>
+            <th>% vs Target</th>
+          </tr>
+        </thead>
         <tbody id="rekap-kec-body"></tbody>
       </table>
     </div>
@@ -296,17 +286,23 @@
     </div>
     <div class="tw">
       <table id="rekap-desa-tbl">
-        <thead><tr>
-          <th>#</th>
-          <th data-sort="rdesa" onclick="setRSort('desa',this)">Desa/Kelurahan</th>
-          <th data-sort="rkec2" onclick="setRSort('kec2',this)">Kecamatan</th>
-          <th data-sort="rtot2" onclick="setRSort('tot2',this)">Pendaftar</th>
-          <th data-sort="rsob2" onclick="setRSort('sob2',this)">🤝 Sobat</th>
-          <th data-sort="rtgt2" onclick="setRSort('tgt2',this)">Target</th>
-          <th data-sort="rpct2" onclick="setRSort('pct2',this)">% Terpenuhi</th>
-          <th>Status</th>
-          <th><span style="color:#3b82f6">●</span> Form &nbsp;<span style="color:#06b6d4">●</span> Sobat</th>
-        </tr></thead>
+        <thead>
+          <tr>
+            <th rowspan="2" style="vertical-align:bottom">#</th>
+            <th rowspan="2" data-sort="rdesa" onclick="setRSort('desa',this)" style="vertical-align:bottom">Desa/Kelurahan</th>
+            <th rowspan="2" data-sort="rkec2" onclick="setRSort('kec2',this)" style="vertical-align:bottom">Kecamatan</th>
+            <th colspan="4" class="th-form">📋 Tahap 1 — Pendaftaran Google Form</th>
+            <th colspan="2" class="th-sobat">🤝 Tahap 2 — Sobat Mitra</th>
+          </tr>
+          <tr>
+            <th data-sort="rtot2" onclick="setRSort('tot2',this)">Pendaftar</th>
+            <th data-sort="rtgt2" onclick="setRSort('tgt2',this)">Target</th>
+            <th data-sort="rpct2" onclick="setRSort('pct2',this)">% Capaian</th>
+            <th>Status</th>
+            <th data-sort="rsob2" onclick="setRSort('sob2',this)" class="td-sep">Jumlah</th>
+            <th>% vs Target</th>
+          </tr>
+        </thead>
         <tbody id="rekap-desa-body"></tbody>
       </table>
     </div>

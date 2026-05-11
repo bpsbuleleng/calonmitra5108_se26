@@ -88,29 +88,18 @@ function renderRekapKec(){
 
   document.getElementById('rekap-kec-body').innerHTML = sorted.map(k=>{
     const pct = Math.round(k.pct*100);
-    const w = Math.min(100,pct);
-    const col = k.pct>=1?'#059669':k.pct>=.5?'#d97706':'#dc2626';
     const badgeCls = k.pct>=1?'bg':k.pct>=.5?'by':'br';
-    const sobatPct = k.tot>0 ? Math.round(k.sobat/k.tot*100) : 0;
-    const sobatBar = k.tgt>0 ? Math.min(100, Math.round(k.sobat/k.tgt*100)) : 0;
+    const sobatPctTgt = k.tgt>0 ? Math.round(k.sobat/k.tgt*100) : 0;
+    const sobatBdg = sobatPctTgt>=100?'bg':sobatPctTgt>=50?'by':'br';
     return `<tr>
       <td style="font-weight:700">${esc(k.kec)}</td>
       <td style="font-variant-numeric:tabular-nums;font-weight:600">${k.tot.toLocaleString('id-ID')}</td>
-      <td style="font-variant-numeric:tabular-nums">${k.sobat} <span style="color:var(--muted);font-size:10px">(${sobatPct}%)</span></td>
       <td style="font-variant-numeric:tabular-nums">${k.tgt.toLocaleString('id-ID')}</td>
       <td><span class="bdg ${badgeCls}">${pct}%</span></td>
       <td>${k.desa}</td>
       <td><span class="bdg ${k.met===k.desa?'bg':'bw'}">${k.met} / ${k.desa}</span></td>
-      <td style="min-width:130px;width:150px">
-        <div style="font-size:9px;color:var(--muted);margin-bottom:1px">📋 Form</div>
-        <div style="height:5px;background:var(--brd);border-radius:3px;overflow:hidden;margin-bottom:5px">
-          <div style="height:100%;width:${w}%;background:${col};border-radius:3px;transition:width .8s"></div>
-        </div>
-        <div style="font-size:9px;color:#0891b2;margin-bottom:1px">🤝 Sobat</div>
-        <div style="height:5px;background:var(--brd);border-radius:3px;overflow:hidden">
-          <div style="height:100%;width:${sobatBar}%;background:#06b6d4;border-radius:3px;transition:width .8s"></div>
-        </div>
-      </td>
+      <td class="td-sep" style="font-variant-numeric:tabular-nums;font-weight:600">${k.sobat.toLocaleString('id-ID')}</td>
+      <td><span class="bdg ${sobatBdg}">${sobatPctTgt}%</span></td>
     </tr>`;
   }).join('') || `<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted)">Belum ada data</td></tr>`;
 }
@@ -153,29 +142,18 @@ function renderRekapDesa(){
   const badgeCls  = {met:'bg',partial:'by',empty:'br',nodata:'bw'};
   document.getElementById('rekap-desa-body').innerHTML = pg.map((d,i)=>{
     const pct = Math.round(d.pct*100);
-    const w = Math.min(100,pct);
-    const col = d.pct>=1?'#059669':d.pct>=.5?'#d97706':'#dc2626';
-    const sobatPct = d.tot>0 ? Math.round(d.sobat/d.tot*100) : 0;
-    const sobatBar = d.tgt>0 ? Math.min(100, Math.round(d.sobat/d.tgt*100)) : 0;
+    const sobatPctTgt = d.tgt>0 ? Math.round(d.sobat/d.tgt*100) : 0;
+    const sobatBdg = sobatPctTgt>=100?'bg':sobatPctTgt>=50?'by':'br';
     return `<tr>
       <td>${st+i+1}</td>
       <td style="font-weight:600">${esc(d.desa||'–')}</td>
       <td style="white-space:nowrap">${esc(d.kec||'–')}</td>
       <td style="font-weight:700;font-variant-numeric:tabular-nums">${d.tot}</td>
-      <td style="font-variant-numeric:tabular-nums">${d.tot>0?`${d.sobat} <span style="color:var(--muted);font-size:10px">(${sobatPct}%)</span>`:'–'}</td>
       <td style="font-variant-numeric:tabular-nums">${d.tgt||'–'}</td>
       <td>${d.tgt>0?`<span class="bdg ${badgeCls[d.status]}">${pct}%</span>`:'–'}</td>
       <td>${statusIco[d.status]}</td>
-      <td style="min-width:130px;width:150px">
-        ${d.tgt>0?`<div style="font-size:9px;color:var(--muted);margin-bottom:1px">📋 Form</div>
-        <div style="height:5px;background:var(--brd);border-radius:3px;overflow:hidden;margin-bottom:5px">
-          <div style="height:100%;width:${w}%;background:${col};border-radius:3px;transition:width .8s"></div>
-        </div>
-        <div style="font-size:9px;color:#0891b2;margin-bottom:1px">🤝 Sobat</div>
-        <div style="height:5px;background:var(--brd);border-radius:3px;overflow:hidden">
-          <div style="height:100%;width:${sobatBar}%;background:#06b6d4;border-radius:3px;transition:width .8s"></div>
-        </div>`:'–'}
-      </td>
+      <td class="td-sep" style="font-variant-numeric:tabular-nums">${d.tot>0?d.sobat:'–'}</td>
+      <td>${d.tgt>0?`<span class="bdg ${sobatBdg}">${sobatPctTgt}%</span>`:'–'}</td>
     </tr>`;
   }).join('') || `<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--muted)">Tidak ada data</td></tr>`;
 
@@ -327,12 +305,16 @@ function renderTargetList(){
         <span class="tg-desa">${ic[i.status]} ${esc(i.desa)}</span>
         <span class="tg-kec">Kec. ${esc(i.kec)}</span>
       </div>
-      <div class="tg-bars">
+      <div class="tg-stage">
+        <div class="tg-stage-lbl">📋 Form</div>
         <div class="tg-bar"><div class="tg-fill" style="width:${w}%"></div></div>
-        <div class="tg-bar tg-bar-sobat"><div class="tg-fill-sobat" style="width:${sw}%"></div></div>
+        <div class="tg-meta">${i.actual} / ${i.target} &nbsp;<b>${Math.round(i.pct*100)}%</b></div>
       </div>
-      <div class="tg-num">${i.actual} / ${i.target}</div>
-      <div class="tg-pct">${Math.round(i.pct*100)}%</div>
+      <div class="tg-stage tg-stage-sobat">
+        <div class="tg-stage-lbl">🤝 Sobat</div>
+        <div class="tg-bar tg-bar-sobat"><div class="tg-fill-sobat" style="width:${sw}%"></div></div>
+        <div class="tg-meta">${i.sobat} / ${i.target} &nbsp;<b>${Math.round(i.sobatPct*100)}%</b></div>
+      </div>
     </div>`;
   }).join('') : `<div class="es"><div class="es-i">🔍</div>Tidak ada desa pada filter ini</div>`;
 }
