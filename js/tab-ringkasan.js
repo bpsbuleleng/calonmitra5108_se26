@@ -18,10 +18,6 @@ function calcStats(data){
   const tdy = data.filter(r=>{
     try{ return r.Timestamp && new Date(r.Timestamp).toLocaleDateString('id-ID')===todayStr; }catch{return false;}
   }).length;
-  const kecs = new Set(data.map(r=>r['Kecamatan Domisili']?.trim()).filter(Boolean));
-  const desas = new Set(data.map(r=>normDesa(getDesaVal(r))).filter(Boolean));
-  const allKec = geo ? new Set(geo.features.map(f=>f.properties.nmkec)).size : '?';
-  const allDesa = geo ? geo.features.length : 148;
   const dupTotal = rows.filter(r=>r._dn||r._dh).length;
 
   set('s-tot', tot.toLocaleString('id-ID'));
@@ -31,15 +27,16 @@ function calcStats(data){
     : (tot===totAll ? `${tot} orang telah mendaftar` : `dari ${totAll.toLocaleString('id-ID')} total`));
   set('s-tdy', tdy.toLocaleString('id-ID'));
   set('s-tdys', tdy>0?`↑ pendaftar baru hari ini`:`Belum ada pendaftar hari ini`);
-  set('s-kec', kecs.size);
-  set('s-kecs', `dari ${allKec} kecamatan`);
-  set('s-des', desas.size);
-  set('s-dess', `dari ${allDesa} desa/kel`);
   set('s-dup', dupTotal);
 
   const sobatCount = data.filter(isSobatRegistered).length;
+  const sobatNo = tot - sobatCount;
+  const convPct = Math.round(sobatCount/Math.max(tot,1)*100);
   set('s-sobat', sobatCount.toLocaleString('id-ID'));
-  set('s-sobats', `${Math.round(sobatCount/Math.max(tot,1)*100)}% dari total pendaftar`);
+  set('s-sobats', `${convPct}% dari total pendaftar`);
+  set('s-sobat-no', sobatNo.toLocaleString('id-ID'));
+  set('s-sobat-nos', `${100-convPct}% dari total pendaftar`);
+  set('s-conv', `${convPct}% pendaftar melanjutkan ke Sobat Mitra`);
 
   const cntByNm2 = {};
   data.forEach(r=>{ const nm=normDesa(getDesaVal(r)); if(nm) cntByNm2[nm]=(cntByNm2[nm]||0)+1; });
