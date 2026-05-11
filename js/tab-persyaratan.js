@@ -11,7 +11,7 @@ function renderReqs(){
     {icon:'✍️',label:'Surat Pernyataan Siap',
      chk:r=>/(ya|iya|sudah|ada)/i.test(r['Surat Pernyataan Kesiapan Melaksanakan Tugas Sensus Ekonomi 2026']||''),col:'#f59e0b'},
     {icon:'🤝',label:'Registrasi Sobat Mitra',
-     chk:r=>/(sudah|ya|iya)/i.test(r['Sudah melakukan pendaftaran/registrasi melalui Sobat Mitra?']||''),col:'#06b6d4'},
+     chk:isSobatRegistered,col:'#06b6d4'},
     {icon:'🪪',label:'Upload KTP',
      chk:r=>!!(r['KTP']||'').trim(),col:'#ef4444'}
   ];

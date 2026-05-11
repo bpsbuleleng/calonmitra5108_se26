@@ -12,26 +12,32 @@ function getDesaVal(r){ return r[resolveDesaField(r)] || r['nmdesa'] || ''; }
 
 function buildRekapData(){
   _desaFieldCache = null; // reset on each full rebuild
-  const cntByNm = {};
+  const cntByNm = {}, sobatByNm = {};
   const base = getBase();
   base.forEach(r=>{
     const nm = normDesa(getDesaVal(r));
-    if(nm) cntByNm[nm] = (cntByNm[nm]||0) + 1;
+    if(nm){
+      cntByNm[nm] = (cntByNm[nm]||0) + 1;
+      if(isSobatRegistered(r)) sobatByNm[nm] = (sobatByNm[nm]||0) + 1;
+    }
   });
 
   const desaRows = targets.map(t=>{
-    const tot = cntByNm[normDesa(t.desa)] || 0;
+    const key = normDesa(t.desa);
+    const tot   = cntByNm[key]   || 0;
+    const sobat = sobatByNm[key] || 0;
     const pct = t.target > 0 ? tot/t.target : 0;
     const status = t.target===0 ? 'nodata' : tot===0 ? 'empty' : tot>=t.target ? 'met' : 'partial';
-    return {iddesa:t.iddesa, desa:t.desa, kec:t.kec, tot, tgt:t.target, pct, status};
+    return {iddesa:t.iddesa, desa:t.desa, kec:t.kec, tot, sobat, tgt:t.target, pct, status};
   });
 
   // Aggregate to kecamatan — kec values are all canonical from targets, so always 9 rows.
   const kecMap = {};
   desaRows.forEach(d=>{
-    if(!kecMap[d.kec]) kecMap[d.kec] = {kec:d.kec, tot:0, tgt:0, desa:0, met:0};
-    kecMap[d.kec].tot += d.tot;
-    kecMap[d.kec].tgt += d.tgt;
+    if(!kecMap[d.kec]) kecMap[d.kec] = {kec:d.kec, tot:0, tgt:0, desa:0, met:0, sobat:0};
+    kecMap[d.kec].tot   += d.tot;
+    kecMap[d.kec].tgt   += d.tgt;
+    kecMap[d.kec].sobat += d.sobat;
     kecMap[d.kec].desa++;
     if(d.status==='met') kecMap[d.kec].met++;
   });
@@ -52,12 +58,13 @@ function renderRekap(){
 }
 
 const RKEC_COLS = {
-  kec:  r=>r.kec.toLowerCase(),
-  tot:  r=>r.tot,
-  tgt:  r=>r.tgt,
-  pct:  r=>r.pct,
-  des:  r=>r.desa,
-  met:  r=>r.met
+  kec:   r=>r.kec.toLowerCase(),
+  tot:   r=>r.tot,
+  sobat: r=>r.sobat,
+  tgt:   r=>r.tgt,
+  pct:   r=>r.pct,
+  des:   r=>r.desa,
+  met:   r=>r.met
 };
 
 function setRSort(key, th){
@@ -84,9 +91,11 @@ function renderRekapKec(){
     const w = Math.min(100,pct);
     const col = k.pct>=1?'#059669':k.pct>=.5?'#d97706':'#dc2626';
     const badgeCls = k.pct>=1?'bg':k.pct>=.5?'by':'br';
+    const sobatPct = k.tot>0 ? Math.round(k.sobat/k.tot*100) : 0;
     return `<tr>
       <td style="font-weight:700">${esc(k.kec)}</td>
       <td style="font-variant-numeric:tabular-nums;font-weight:600">${k.tot.toLocaleString('id-ID')}</td>
+      <td style="font-variant-numeric:tabular-nums">${k.sobat} <span style="color:var(--muted);font-size:10px">(${sobatPct}%)</span></td>
       <td style="font-variant-numeric:tabular-nums">${k.tgt.toLocaleString('id-ID')}</td>
       <td><span class="bdg ${badgeCls}">${pct}%</span></td>
       <td>${k.desa}</td>
@@ -97,13 +106,14 @@ function renderRekapKec(){
         </div>
       </td>
     </tr>`;
-  }).join('') || `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted)">Belum ada data</td></tr>`;
+  }).join('') || `<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted)">Belum ada data</td></tr>`;
 }
 
 const RDESA_COLS = {
   desa: r=>r.desa.toLowerCase(),
   kec2: r=>r.kec.toLowerCase(),
   tot2: r=>r.tot,
+  sob2: r=>r.sobat,
   tgt2: r=>r.tgt,
   pct2: r=>r.pct,
 };
@@ -139,11 +149,13 @@ function renderRekapDesa(){
     const pct = Math.round(d.pct*100);
     const w = Math.min(100,pct);
     const col = d.pct>=1?'#059669':d.pct>=.5?'#d97706':'#dc2626';
+    const sobatPct = d.tot>0 ? Math.round(d.sobat/d.tot*100) : 0;
     return `<tr>
       <td>${st+i+1}</td>
       <td style="font-weight:600">${esc(d.desa||'–')}</td>
       <td style="white-space:nowrap">${esc(d.kec||'–')}</td>
       <td style="font-weight:700;font-variant-numeric:tabular-nums">${d.tot}</td>
+      <td style="font-variant-numeric:tabular-nums">${d.tot>0?`${d.sobat} <span style="color:var(--muted);font-size:10px">(${sobatPct}%)</span>`:'–'}</td>
       <td style="font-variant-numeric:tabular-nums">${d.tgt||'–'}</td>
       <td>${d.tgt>0?`<span class="bdg ${badgeCls[d.status]}">${pct}%</span>`:'–'}</td>
       <td>${statusIco[d.status]}</td>
@@ -153,7 +165,7 @@ function renderRekapDesa(){
         </div>`:'–'}
       </td>
     </tr>`;
-  }).join('') || `<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted)">Tidak ada data</td></tr>`;
+  }).join('') || `<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--muted)">Tidak ada data</td></tr>`;
 
   const en = Math.min(st+RD_PG, rekapDesaRows.length);
   document.getElementById('rekap-pgi').textContent = rekapDesaRows.length>0
@@ -173,17 +185,25 @@ function goRDPage(p){
 
 function exportRekapKec(){
   const {kecRows} = buildRekapData();
-  const hdr = ['Kecamatan','Total Pendaftar','Target Petugas','% Terpenuhi','Jumlah Desa','Desa Memenuhi Target'];
-  const body = kecRows.map(k=>[k.kec, k.tot, k.tgt, Math.round(k.pct*100)+'%', k.desa, k.met]);
+  const hdr = ['Kecamatan','Total Pendaftar','Sobat Mitra','% Sobat','Target Petugas','% Terpenuhi','Jumlah Desa','Desa Memenuhi Target'];
+  const body = kecRows.map(k=>[
+    k.kec, k.tot, k.sobat,
+    k.tot>0 ? Math.round(k.sobat/k.tot*100)+'%' : '–',
+    k.tgt, Math.round(k.pct*100)+'%', k.desa, k.met
+  ]);
   dlCSV([hdr,...body], `rekap_kecamatan_se2026_${new Date().toISOString().split('T')[0]}.csv`);
   toast('Export rekap kecamatan berhasil','success');
 }
 
 function exportRekapDesa(){
   const {desaRows} = buildRekapData();
-  const hdr = ['Kecamatan','Desa/Kelurahan','Total Pendaftar','Target Petugas','% Terpenuhi','Status'];
+  const hdr = ['Kecamatan','Desa/Kelurahan','Total Pendaftar','Sobat Mitra','% Sobat','Target Petugas','% Terpenuhi','Status'];
   const statusLabel = {met:'Memenuhi',partial:'Belum Cukup',empty:'Belum Ada Pendaftar',nodata:'–'};
-  const body = desaRows.map(d=>[d.kec, d.desa, d.tot, d.tgt||'', d.tgt>0?Math.round(d.pct*100)+'%':'–', statusLabel[d.status]]);
+  const body = desaRows.map(d=>[
+    d.kec, d.desa, d.tot, d.sobat,
+    d.tot>0 ? Math.round(d.sobat/d.tot*100)+'%' : '–',
+    d.tgt||'', d.tgt>0?Math.round(d.pct*100)+'%':'–', statusLabel[d.status]
+  ]);
   dlCSV([hdr,...body], `rekap_desa_se2026_${new Date().toISOString().split('T')[0]}.csv`);
   toast('Export rekap desa berhasil','success');
 }

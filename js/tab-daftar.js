@@ -24,7 +24,7 @@ function doFilter(){
 }
 
 function hasRekom(r){return /(ya|iya|sudah|ada)/i.test(r['Memiliki Surat Rekomendasi Calon Petugas Sensus Ekonomi 2026 dari Perbekel/Lurah']||'');}
-function hasSobat(r){return /(sudah|ya|iya)/i.test(r['Sudah melakukan pendaftaran/registrasi melalui Sobat Mitra?']||'');}
+function hasSobat(r){ return isSobatRegistered(r); }
 
 function renderList(){
   const st=(curPage-1)*PAGE_SZ;

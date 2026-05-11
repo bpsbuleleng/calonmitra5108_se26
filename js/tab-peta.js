@@ -7,7 +7,16 @@ function initMap(){
   L.control.attribution({prefix:'© OpenStreetMap © CartoDB'}).addTo(lmap);
 }
 
-function getColor(n, mx, target){
+function getColor(n, mx, target, sobat){
+  if(mapMode==='sobat'){
+    if(!n) return '#f1f5f9';
+    const p = sobat/n;
+    if(p>=.75) return '#059669';
+    if(p>=.50) return '#84cc16';
+    if(p>=.25) return '#facc15';
+    if(p> 0)   return '#f97316';
+    return '#ef4444';
+  }
   if(mapMode==='target'){
     if(!target) return '#e5e7eb';
     if(n>=target) return '#059669';
@@ -33,11 +42,14 @@ function paintMap(){
     const nm = normDesa(f.properties.nmdesa||'');
     if(nm) nmToId[nm] = f.properties.iddesa;
   });
-  const cnt = {};
+  const cnt = {}, sobatCnt = {};
   getBase().forEach(r=>{
     const nm = normDesa(r['Desa Domisili']||r['nmdesa']||'');
     const id = (nm && nmToId[nm]) || r['iddesa'];
-    if(id) cnt[id] = (cnt[id]||0)+1;
+    if(id){
+      cnt[id] = (cnt[id]||0)+1;
+      if(isSobatRegistered(r)) sobatCnt[id] = (sobatCnt[id]||0)+1;
+    }
   });
   const mx = Math.max(...Object.values(cnt), 1);
 
@@ -46,26 +58,34 @@ function paintMap(){
   gjLayer = L.geoJSON(geo,{
     style: f=>{
       const id=f.properties.iddesa;
-      const n=cnt[id]||0;
+      const n=cnt[id]||0, s=sobatCnt[id]||0;
       const tgt=targetByIdDesa[String(id)]||0;
       const fop = mapMode==='target'
         ? (tgt ? 0.92 : 0.35)
         : (n ? 0.92 : 0.45);
-      return { fillColor:getColor(n,mx,tgt), weight:0.3, opacity:1, color:'#ffffff', fillOpacity: fop };
+      return { fillColor:getColor(n,mx,tgt,s), weight:0.3, opacity:1, color:'#ffffff', fillOpacity: fop };
     },
     onEachFeature:(f,layer)=>{
-      const p=f.properties, n=cnt[p.iddesa]||0, tgt=targetByIdDesa[String(p.iddesa)]||0;
+      const p=f.properties, n=cnt[p.iddesa]||0, s=sobatCnt[p.iddesa]||0, tgt=targetByIdDesa[String(p.iddesa)]||0;
       const pct = tgt>0 ? Math.round(n/tgt*100) : 0;
+      const sobatPct = n>0 ? Math.round(s/n*100) : 0;
       let statusHtml = '';
       if(tgt>0){
         if(n>=tgt) statusHtml = `<div style="font-size:11px;font-weight:700;margin-top:4px;color:#059669">✅ Memenuhi target (${pct}%)</div>`;
         else if(n===0) statusHtml = `<div style="font-size:11px;font-weight:700;margin-top:4px;color:#dc2626">⛔ Belum ada pendaftar</div>`;
         else statusHtml = `<div style="font-size:11px;font-weight:700;margin-top:4px;color:#d97706">⚠️ Kurang ${tgt-n} (${pct}%)</div>`;
       }
+      const sobatLine = n>0
+        ? `<div style="font-size:11px;color:#0891b2;margin-top:4px">🤝 Sobat Mitra: <b>${s}</b> / ${n} (${sobatPct}%)</div>`
+        : '';
+      const mainHtml = mapMode==='sobat'
+        ? `<div class="cnt">${s} terdaftar Sobat Mitra</div>
+           <div style="font-size:11px;color:#64748b;margin-top:2px">dari ${n} pendaftar (${sobatPct}%)</div>`
+        : `<div class="cnt">${n} pendaftar</div>${sobatLine}`;
       const html = `<div class="lf-popup">
         <h4>${esc(p.nmdesa)}</h4>
         <div class="sub">Kec. ${esc(p.nmkec)}</div>
-        <div class="cnt">${n} pendaftar</div>
+        ${mainHtml}
         ${tgt>0?`<div style="font-size:11px;color:#64748b;margin-top:4px">Target: <b>${tgt}</b> petugas</div>`:''}
         ${statusHtml}
       </div>`;
@@ -77,8 +97,9 @@ function paintMap(){
 
   lmap.fitBounds(gjLayer.getBounds(),{padding:[16,16]});
   set('ml-min','0'); set('ml-max', String(mx));
-  document.getElementById('ml-count').style.display = mapMode==='count' ? 'flex' : 'none';
+  document.getElementById('ml-count').style.display  = mapMode==='count'  ? 'flex' : 'none';
   document.getElementById('ml-target').style.display = mapMode==='target' ? 'flex' : 'none';
+  document.getElementById('ml-sobat').style.display  = mapMode==='sobat'  ? 'flex' : 'none';
 }
 
 function setMapMode(m, btn){

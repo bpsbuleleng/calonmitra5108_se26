@@ -37,6 +37,10 @@ function calcStats(data){
   set('s-dess', `dari ${allDesa} desa/kel`);
   set('s-dup', dupTotal);
 
+  const sobatCount = data.filter(isSobatRegistered).length;
+  set('s-sobat', sobatCount.toLocaleString('id-ID'));
+  set('s-sobats', `${Math.round(sobatCount/Math.max(tot,1)*100)}% dari total pendaftar`);
+
   const cntByNm2 = {};
   data.forEach(r=>{ const nm=normDesa(getDesaVal(r)); if(nm) cntByNm2[nm]=(cntByNm2[nm]||0)+1; });
   const ofKec = document.getElementById('of-kec')?.value || '';
@@ -163,8 +167,8 @@ function buildCharts(data){
   }});
   mkBar('ageC', Object.keys(ageBk), Object.values(ageBk));
 
-  const sobat=cntBy(rows,'Sudah melakukan pendaftaran/registrasi melalui Sobat Mitra?');
-  mkDonut('sobatC', sobat);
+  const sobatYa = data.filter(isSobatRegistered).length;
+  mkDonut('sobatC', [['Sudah Terdaftar', sobatYa], ['Belum Terdaftar', data.length - sobatYa]]);
 
   const docLbls=['Unggah KTP','Surat Rekomendasi','Surat Pernyataan'];
   const docCnt=[

@@ -19,6 +19,10 @@ function fmtTs(ts){
   try{ if(!ts)return '–'; return new Date(ts).toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
   catch{ return ts||'–'; }
 }
+function isSobatRegistered(r){
+  const v=(r[SOBAT_MITRA_FIELD]||'').toString().trim();
+  return v.includes('@');
+}
 
 function dlCSV(rows2d, filename){
   const csv = rows2d.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');

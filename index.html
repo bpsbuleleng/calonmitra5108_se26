@@ -78,6 +78,7 @@
     <div class="sc" style="--ac:#8b5cf6"><div class="si">🏡</div><div class="sv" id="s-des">–</div><div class="sl">Desa Terwakili</div><div class="ss" id="s-dess">–</div></div>
     <div class="sc" style="--ac:#059669"><div class="si">🎯</div><div class="sv" id="s-tgt">–</div><div class="sl">Desa Memenuhi Target</div><div class="ss" id="s-tgts">–</div></div>
     <div class="sc" style="--ac:#ef4444"><div class="si">⚠️</div><div class="sv" id="s-dup">–</div><div class="sl">Terindikasi Duplikat</div><div class="ss">NIK / No. HP</div></div>
+    <div class="sc" style="--ac:#06b6d4"><div class="si">🤝</div><div class="sv" id="s-sobat">–</div><div class="sl">Terdaftar Sobat Mitra</div><div class="ss" id="s-sobats">–</div></div>
   </div>
 
   <div class="g2 sec">
@@ -123,6 +124,7 @@
         <div class="seg" id="mm-seg">
           <button class="seg-b on" onclick="setMapMode('count',this)">📊 Pendaftar</button>
           <button class="seg-b" onclick="setMapMode('target',this)">🎯 Pemenuhan Target</button>
+          <button class="seg-b" onclick="setMapMode('sobat',this)">🤝 Sobat Mitra</button>
         </div>
         <select class="fs" id="mkf" onchange="mapFilter()"><option value="">Semua Kecamatan</option></select>
       </div>
@@ -142,6 +144,14 @@
         <span class="ml-step ml-step-y">50–74%</span>
         <span class="ml-step ml-step-l">75–99%</span>
         <span class="ml-step ml-step-g">✅ ≥100%</span>
+      </div>
+      <div class="ml-row" id="ml-sobat" style="display:none">
+        <span class="ml-ttl">Sobat Mitra Terdaftar</span>
+        <span class="ml-step ml-step-r">⛔ 0%</span>
+        <span class="ml-step ml-step-o">1–24%</span>
+        <span class="ml-step ml-step-y">25–49%</span>
+        <span class="ml-step ml-step-l">50–74%</span>
+        <span class="ml-step ml-step-g">✅ ≥75%</span>
       </div>
       <div class="ml-hint">Arahkan kursor ke desa untuk detail • Scroll untuk zoom</div>
     </div>
@@ -217,6 +227,7 @@
         <thead><tr>
           <th data-sort="rkec" onclick="setRSort('kec',this)">Kecamatan</th>
           <th data-sort="rtot" onclick="setRSort('tot',this)">Total Pendaftar</th>
+          <th data-sort="rsobat" onclick="setRSort('sobat',this)">🤝 Sobat Mitra</th>
           <th data-sort="rtgt" onclick="setRSort('tgt',this)">Target Petugas</th>
           <th data-sort="rpct" onclick="setRSort('pct',this)">% Terpenuhi</th>
           <th data-sort="rdes" onclick="setRSort('des',this)">Desa Terwakili</th>
@@ -243,6 +254,7 @@
           <th data-sort="rdesa" onclick="setRSort('desa',this)">Desa/Kelurahan</th>
           <th data-sort="rkec2" onclick="setRSort('kec2',this)">Kecamatan</th>
           <th data-sort="rtot2" onclick="setRSort('tot2',this)">Pendaftar</th>
+          <th data-sort="rsob2" onclick="setRSort('sob2',this)">🤝 Sobat</th>
           <th data-sort="rtgt2" onclick="setRSort('tgt2',this)">Target</th>
           <th data-sort="rpct2" onclick="setRSort('pct2',this)">% Terpenuhi</th>
           <th>Status</th>
