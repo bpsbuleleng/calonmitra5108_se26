@@ -11,16 +11,24 @@
  * Cara deploy: lihat instruksi di akhir file.
  */
 
-const SHEET_ID   = '1SDCgjjrS6tKEN6f5GJqqiY8ydltrE2Ll5eWbVFETFvE';
-const SHEET_NAME = '';      // kosongkan = sheet pertama
+const SHEET_ID        = '1SDCgjjrS6tKEN6f5GJqqiY8ydltrE2Ll5eWbVFETFvE';
+const SHEET_NAME      = '';      // kosongkan = sheet pertama
+const KEPKA_SHEET_NAME = 'Impor Gform Kepka';
 const COL_NIK    = 'NIK (Nomor Induk Kependudukan)';
 const COL_HP     = 'No Hp (WA)';
 const COL_TS     = 'Timestamp';
 
 function doGet(e){
+  const sheetParam = (e && e.parameter && e.parameter.sheet) || '';
   try{
     const ss = SpreadsheetApp.openById(SHEET_ID);
-    const sh = SHEET_NAME ? ss.getSheetByName(SHEET_NAME) : ss.getSheets()[0];
+    let sh;
+    if(sheetParam === 'kepka'){
+      sh = ss.getSheetByName(KEPKA_SHEET_NAME);
+      if(!sh) return jsonResp({error:'Sheet "'+KEPKA_SHEET_NAME+'" tidak ditemukan', rows:[], count:0});
+    } else {
+      sh = SHEET_NAME ? ss.getSheetByName(SHEET_NAME) : ss.getSheets()[0];
+    }
     const values = sh.getDataRange().getValues();
     if(!values.length) return jsonResp({rows:[], count:0, fetched_at: new Date().toISOString()});
 
@@ -43,6 +51,8 @@ function doGet(e){
         if(j===idxNIK || j===idxHP) continue; // PII: tidak dikirim
         let v = row[j];
         if(v instanceof Date) v = v.toISOString();
+        else if(v === null || v === undefined) v = '';
+        else if(typeof v === 'object') v = '#N/A'; // formula error (misal VLOOKUP #N/A)
         obj[h] = v;
       }
       // hash PII — tetap dikirim sebagai hash untuk deteksi duplikat

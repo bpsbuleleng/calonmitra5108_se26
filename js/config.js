@@ -29,4 +29,9 @@ let rekapKecSort  = {key:'idkec',  dir:'asc'};
 let rekapDesaSort = {key:'iddesa', dir:'asc'};
 let rekapDesaPage = 1;
 
+const KEPKA_PAGE_SZ = 25;
+let kepkaRows = [], kepkaFrows = [];
+let kepkaSort = {key:'nama', dir:'asc'};
+let kepkaPage = 1;
+
 function getBase(){ return dedup ? cleanRows : rows; }

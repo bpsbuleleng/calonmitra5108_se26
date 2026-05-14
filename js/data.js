@@ -60,10 +60,11 @@ async function load(){
     if(!WEBAPP_URL){
       throw new Error('WEBAPP_URL belum diisi. Lihat apps_script/Code.gs untuk cara deploy.');
     }
-    const [data, gj, tg] = await Promise.all([
+    const [data, gj, tg, kepkaData] = await Promise.all([
       fetchData(),
       geo ? Promise.resolve(geo) : fetch(GEO_URL).then(r=>r.json()),
-      targets.length ? Promise.resolve(targets) : fetch('excel/targets.json').then(r=>r.json()).catch(()=>[])
+      targets.length ? Promise.resolve(targets) : fetch('excel/targets.json').then(r=>r.json()).catch(()=>[]),
+      fetchKepkaData()
     ]);
     geo = gj;
     targets = tg || [];
@@ -71,6 +72,9 @@ async function load(){
     targets.forEach(t => { targetByIdDesa[t.iddesa] = t.target; });
     rows = data.filter(r => r && r.Timestamp && String(r.Timestamp).trim());
     frows = [...rows];
+    kepkaRows = kepkaData;
+    kepkaFrows = [...kepkaRows];
+    initKepkaFieldKeys(kepkaRows);
     ltxt('Memproses data...');
     await process();
     document.getElementById('upd').textContent =
@@ -91,6 +95,20 @@ async function fetchData(){
   return j.rows || [];
 }
 
+async function fetchKepkaData(){
+  if(!WEBAPP_URL) return [];
+  try{
+    const r = await fetch(WEBAPP_URL + '?sheet=kepka', {redirect:'follow', cache:'no-store'});
+    if(!r.ok) return [];
+    const j = await r.json();
+    if(j.error){ console.warn('Data Kepka:', j.error); return []; }
+    return j.rows || [];
+  }catch(e){
+    console.warn('Gagal memuat data Kepka:', e.message);
+    return [];
+  }
+}
+
 async function process(){
   await detectDups();
   cleanRows = buildCleanRows();
@@ -104,6 +122,10 @@ async function process(){
   sortRows(); renderList();
   buildFilters();
   renderRekap();
+  buildKepkaFilters();
+  kepkaFrows = [...kepkaRows];
+  sortKepkaRows();
+  renderKepka();
   mapPainted = false;
   fillMapKecFilter();
   if(document.getElementById('tsec-map').classList.contains('on')){
@@ -128,9 +150,12 @@ async function doRefresh(){
   if(!WEBAPP_URL){ toast('WEBAPP_URL belum diisi','error'); return; }
   show('lov'); ltxt('Memperbarui data...');
   try{
-    const data = await fetchData();
+    const [data, kepkaData] = await Promise.all([fetchData(), fetchKepkaData()]);
     rows = data.filter(r => r && r.Timestamp && String(r.Timestamp).trim());
     frows=[...rows];
+    kepkaRows = kepkaData;
+    kepkaFrows = [...kepkaRows];
+    initKepkaFieldKeys(kepkaRows);
     await process();
     toast('Data berhasil diperbarui','success');
   }catch(e){ toast('Gagal memperbarui data','error'); }

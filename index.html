@@ -49,6 +49,7 @@
   <div class="tab" data-tab="rekap" onclick="goTab('rekap')">📋 Rekap</div>
   <div class="tab" data-tab="dups" onclick="goTab('dups')">🔍 Duplikat<span id="dupbdg" class="bdg br" style="display:none;margin-left:4px"></span></div>
   <div class="tab" data-tab="list" onclick="goTab('list')">👥 Peserta</div>
+  <div class="tab" data-tab="kepka" onclick="goTab('kepka')">🏢 Mitra Kepka</div>
 </div>
 
 <div class="main">
@@ -369,6 +370,56 @@
   </div>
 </div>
 
+<!-- ===== KEPKA ===== -->
+<div id="tsec-kepka" class="tsec">
+
+  <!-- STAT MINI -->
+  <div class="sg sec" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+    <div class="sc" style="--ac:#1e40af"><div class="si">👥</div><div class="sv" id="kepka-total">–</div><div class="sl">Total Mitra Kepka</div></div>
+    <div class="sc" style="--ac:#059669"><div class="si">✅</div><div class="sv" id="kepka-ok">–</div><div class="sl">Terdaftar Kepka</div></div>
+    <div class="sc" style="--ac:#dc2626"><div class="si">❌</div><div class="sv" id="kepka-na">–</div><div class="sl">Belum / NA</div></div>
+  </div>
+
+  <div class="card sec">
+    <div class="ch">
+      <div class="ct"><div class="ci">🏢</div>Daftar Mitra Kepka</div>
+      <button class="btn btn-o" onclick="exportKepkaCSV()">⬇️ Export CSV</button>
+    </div>
+    <div class="cb">
+      <div class="sb">
+        <div class="sw"><input class="si2" id="kepka-srch" placeholder="Cari nama / desa..." oninput="doKepkaFilter()"></div>
+        <select class="fs" id="kepka-fkec" onchange="doKepkaFilter()"><option value="">Semua Kecamatan</option></select>
+        <select class="fs" id="kepka-fjab" onchange="doKepkaFilter()"><option value="">Semua Jabatan</option></select>
+        <select class="fs" id="kepka-fstatus" onchange="doKepkaFilter()">
+          <option value="">Semua Status Kepka</option>
+          <option value="ok">✅ Terdaftar</option>
+          <option value="na">❌ Belum / NA</option>
+        </select>
+      </div>
+      <div class="tw">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th data-sort="nama" onclick="setKepkaSort('nama')">Nama Lengkap</th>
+              <th data-sort="kec"  onclick="setKepkaSort('kec')">Kecamatan</th>
+              <th data-sort="desa" onclick="setKepkaSort('desa')">Desa/Kel</th>
+              <th data-sort="jab"  onclick="setKepkaSort('jab')" style="text-align:center">Jabatan</th>
+              <th data-sort="kepka" onclick="setKepkaSort('kepka')" style="text-align:center" title="Status Kepka (✅ = terdaftar, ❌ = NA/belum)">Kepka</th>
+            </tr>
+          </thead>
+          <tbody id="kepkatb"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Memuat...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="pg">
+      <div class="pgi" id="kepka-pgi"></div>
+      <div class="pgb" id="kepka-pgb"></div>
+    </div>
+  </div>
+
+</div>
+
 </div><!-- /main -->
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -382,6 +433,7 @@
 <script src="js/tab-daftar.js"></script>
 <script src="js/tab-duplikat.js"></script>
 <script src="js/tab-persyaratan.js"></script>
+<script src="js/tab-kepka.js"></script>
 <script>
 (function(){
   if(localStorage.getItem('th')==='d'){
